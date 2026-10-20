@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitácora Masaya</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; }
+    body { background-color: #f4f6f8; color: #333; padding: 20px; display: flex; justify-content: center; }
+    .container { max-width: 500px; width: 100%; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; }
+    h1 { color: #1a252f; font-size: 24px; margin-bottom: 8px; }
+    p.subtitle { color: #666; font-size: 14px; margin-bottom: 24px; }
+    .status-card { background: #eef9f2; border: 1px solid #c3e6cb; padding: 15px; border-radius: 8px; color: #155724; font-size: 14px; margin-bottom: 20px; }
+    .hotel-list { text-align: left; background: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-top: 15px; }
+    .hotel-item { font-size: 14px; font-weight: 600; color: #2c3e50; padding: 6px 0; border-bottom: 1px solid #eaeaea; }
+    .hotel-item:last-child { border-bottom: none; }
+    .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Bitácora Masaya</h1>
+    <p class="subtitle">Prueba de conexión inicial con Supabase</p>
+
+    <div id="status" class="status-card">Conectando con la base de datos...</div>
+
+    <div id="hotels-container" class="hotel-list" style="display: none;">
+      <strong>Hoteles Registrados:</strong>
+      <div id="hotels-list" style="margin-top: 10px;"></div>
+    </div>
+  </div>
+
+  <script>
+    // Configuración de credenciales de Supabase
+    const SUPABASE_URL = https://tsxecbjacdblbxprobdi.supabase.co/rest/v1/;
+    const SUPABASE_KEY = sb_publishable_awz6uY_HmS1o3mf7Pgh55A_kAjbGfRQ;
+
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function checkConnection() {
+      const statusDiv = document.getElementById('status');
+      const containerDiv = document.getElementById('hotels-container');
+      const listDiv = document.getElementById('hotels-list');
+
+      try {
+        const { data, error } = await _supabase.from('hotels').select('*');
+
+        if (error) throw error;
+
+        statusDiv.innerHTML = "✅ ¡Conexión exitosa a Supabase!";
+        statusDiv.className = "status-card";
+        containerDiv.style.display = "block";
+
+        listDiv.innerHTML = data.map(h => `<div class="hotel-item">🏨 ${h.name} (${h.short_name})</div>`).join('');
+      } catch (err) {
+        statusDiv.innerHTML = "❌ Error al conectar: " + err.message;
+        statusDiv.className = "status-card error";
+      }
+    }
+
+    checkConnection();
+  </script>
+</body>
+</html>
