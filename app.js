@@ -1,10 +1,11 @@
 /**
  * ============================================================================
- * BITÁCORA MASAYA - LÓGICA DE AUTENTICACIÓN Y NAVEGACIÓN (app.js v3.0)
+ * BITÁCORA MASAYA - LÓGICA DE AUTENTICACIÓN Y NAVEGACIÓN (app.js v3.4)
  * ============================================================================
  */
 
 const SUPABASE_URL = 'https://tsxecbjacdblbxprobdi.supabase.co';
+// Pega aquí la clave que copiaste del panel de Supabase
 const SUPABASE_ANON_KEY = 'sb_publishable_awz6uY_HmS1o3mf7Pgh55A_kAjbGfRQ';
 
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -28,19 +29,24 @@ async function initLogin() {
   hideMsgs();
   
   try {
-const { data: hotels, error: hError } = await _supabase
-  .from('hotels')
-  .select('*')
-  .order('name');
+    // Consulta directa sin filtro is_active para evitar incompatibilidad de esquema
+    const { data: hotels, error: hError } = await _supabase
+      .from('hotels')
+      .select('*')
+      .order('name');
 
     if (hError) throw hError;
     allHotels = hotels || [];
 
+    console.log("Hoteles cargados desde Supabase:", allHotels);
+
     const hotelSelect = document.getElementById('login-hotel-select');
     if (hotelSelect) {
-      hotelSelect.innerHTML = allHotels.length === 0 
-        ? '<option value="">Sin sedes disponibles</option>'
-        : allHotels.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
+      if (allHotels.length === 0) {
+        hotelSelect.innerHTML = '<option value="">Sin sedes disponibles</option>';
+      } else {
+        hotelSelect.innerHTML = allHotels.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
+      }
     }
 
     if (allHotels.length > 0) {
@@ -60,11 +66,10 @@ async function onHotelChange() {
   if (!selectedHotelId) return;
 
   try {
-const { data: users, error: uError } = await _supabase
-  .from('users')
-  .select('*')
-  .in('id', userIds)
-  .order('full_name');
+    const { data: userHotels, error: uhError } = await _supabase
+      .from('user_hotels')
+      .select('user_id')
+      .eq('hotel_id', selectedHotelId);
 
     if (uhError) throw uhError;
     const userIds = (userHotels || []).map(uh => uh.user_id);
@@ -75,15 +80,17 @@ const { data: users, error: uError } = await _supabase
       return;
     }
 
+    // Consulta de usuarios asignables a la sede seleccionada
     const { data: users, error: uError } = await _supabase
       .from('users')
       .select('*')
       .in('id', userIds)
-      .eq('is_active', true)
       .order('full_name');
 
     if (uError) throw uError;
     allUsers = users || [];
+
+    console.log("Usuarios cargados para la sede:", allUsers);
 
     const userSelect = document.getElementById('login-user-select');
     if (userSelect) {
@@ -146,7 +153,7 @@ async function submitPin() {
     return;
   }
 
-  // Éxito en Autenticación
+  // Autenticación correcta
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-screen').style.display = 'block';
 
@@ -154,7 +161,7 @@ async function submitPin() {
   document.getElementById('current-hotel-name').innerText = hotelObj ? hotelObj.name : 'Sede';
   document.getElementById('current-user-name').innerText = selectedUser.display_name || selectedUser.full_name;
 
-  // Control de Roles para Pestañas Admin
+  // Control de Roles
   const isAdmin = selectedUser.role && selectedUser.role.toUpperCase().includes('ADMIN');
   document.querySelectorAll('.admin-only').forEach(el => {
     el.style.display = isAdmin ? 'inline-block' : 'none';
@@ -181,8 +188,8 @@ function switchTab(tabName) {
   if (activeTab) activeTab.classList.add('active');
   if (activeBtn) activeBtn.classList.add('active');
 
-  if (tabName === 'users') renderUsersTable();
-  if (tabName === 'categories') renderCategoriesTable();
+  if (tabName === 'users' && typeof renderUsersTable === 'function') renderUsersTable();
+  if (tabName === 'categories' && typeof renderCategoriesTable === 'function') renderCategoriesTable();
 }
 
 async function refreshData() {
@@ -205,7 +212,7 @@ function toggleNewIncidentForm() {
   }
 }
 
-/* Gestión de Mensajes de Interfaz */
+/* Notificaciones visuales */
 function showLoginError(msg) {
   const box = document.getElementById('login-msg');
   if (box) {
