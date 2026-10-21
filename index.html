@@ -158,10 +158,13 @@
         <button onclick="resetFlow()" class="btn-sm btn-danger">Cerrar Sesión</button>
       </div>
 
-      <!-- BANNER DE MIS TAREAS PENDIENTES -->
+<!-- BANNER DE MIS TAREAS PENDIENTES -->
       <div id="my-tasks-banner" class="my-tasks-banner" style="display: none;">
         <span id="my-tasks-count">👤 Tienes 0 tareas asignadas pendientes</span>
-        <button class="btn-sm btn-edit" onclick="filterMyTasks()">Ver mis tareas</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-sm btn-edit" onclick="filterMyTasks()">Ver mis tareas</button>
+          <button class="btn-sm" style="background:#e2e8f0; color:#334155;" onclick="clearTaskFilters()">🔄 Ver todas</button>
+        </div>
       </div>
 
       <!-- PESTAÑAS NAVEGACIÓN ADMIN -->
