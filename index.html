@@ -10,7 +10,7 @@
     body { background-color: #1a252f; color: #333; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
     
     .card { background: white; width: 100%; max-width: 480px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; }
-    .card.wide { max-width: 820px; text-align: left; }
+    .card.wide { max-width: 850px; text-align: left; }
     
     h1 { color: #1a252f; font-size: 22px; margin-bottom: 6px; font-weight: 700; text-align: center; }
     p.subtitle { color: #666; font-size: 13px; margin-bottom: 20px; text-align: center; }
@@ -19,6 +19,10 @@
     label { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
     select, input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; background: #fff; }
     select:focus, input:focus { border-color: #007bff; }
+
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; background: #f8fafc; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .checkbox-item { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: #334155; cursor: pointer; }
+    .checkbox-item input { width: auto; margin: 0; cursor: pointer; }
 
     .pin-display { display: flex; justify-content: center; gap: 12px; margin: 20px 0; }
     .pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #ccc; transition: all 0.2s; }
@@ -37,13 +41,14 @@
     .btn-primary { background: #1a252f; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px; }
 
     .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .full-width { grid-column: span 2; }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
     th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
     th { background: #f8fafc; color: #475569; font-weight: 600; }
     .badge-role { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
     .badge-admin { background: #fef3c7; color: #92400e; }
     .badge-op { background: #e0e7ff; color: #3730a3; }
-    .badge-hotel { background: #0284c7; color: #ffffff; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; display: inline-block; }
+    .badge-hotel { background: #0284c7; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; display: inline-block; margin-right: 4px; margin-bottom: 2px; }
     .btn-sm { padding: 4px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; }
     .btn-danger { background: #fee2e2; color: #991b1b; }
   </style>
@@ -58,7 +63,7 @@
     <div id="step-select">
       <div class="form-group">
         <label>1. Selecciona Hotel</label>
-        <select id="hotel-select" onchange="loadUsers()"><option value="">Cargando hoteles...</option></select>
+        <select id="hotel-select" onchange="loadUsersForHotel()"><option value="">Cargando hoteles...</option></select>
       </div>
 
       <div class="form-group">
@@ -112,9 +117,9 @@
         <h3 style="font-size: 15px; margin-bottom: 12px; color: #1a252f;">➕ Crear Nuevo Usuario</h3>
         <form onsubmit="createUser(event)">
           <div class="grid-form">
-            <div class="form-group">
-              <label>Hotel / Sede</label>
-              <select id="new-user-hotel" required></select>
+            <div class="form-group full-width">
+              <label>Sedes / Hoteles Asignados (Selecciona uno o varios)</label>
+              <div id="hotels-checkboxes" class="checkbox-group"></div>
             </div>
             <div class="form-group">
               <label>Nombre Completo</label>
@@ -135,7 +140,7 @@
                 <option value="ADMIN">ADMIN</option>
               </select>
             </div>
-            <div class="form-group">
+            <div class="form-group full-width">
               <label>PIN (4 dígitos)</label>
               <input type="password" id="new-user-pin" maxlength="4" pattern="\d{4}" placeholder="1234" required />
             </div>
@@ -148,7 +153,7 @@
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>Sede / Hotel</th>
+              <th>Sedes Autorizadas</th>
               <th>Rol</th>
               <th>PIN</th>
               <th>Acciones</th>
@@ -179,35 +184,28 @@
     let selectedUser = null;
     let allUsers = [];
     let allHotels = [];
+    let allUserHotels = [];
 
     async function initApp() {
       const hotelSelect = document.getElementById('hotel-select');
       try {
-        if (!window.supabase) {
-          throw new Error("Librería de Supabase no cargada.");
-        }
-
+        if (!window.supabase) throw new Error("Librería de Supabase no cargada.");
         _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Consulta directa de hoteles
         const { data: hotels, error } = await _supabase.from('hotels').select('*');
         if (error) throw error;
         allHotels = hotels || [];
-
-        const newUserHotel = document.getElementById('new-user-hotel');
 
         if (allHotels.length === 0) {
           hotelSelect.innerHTML = '<option value="">No hay hoteles</option>';
           return;
         }
 
-        const optionsHtml = '<option value="">-- Seleccionar --</option>' + 
+        hotelSelect.innerHTML = '<option value="">-- Seleccionar --</option>' + 
           allHotels.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
 
-        hotelSelect.innerHTML = optionsHtml;
-        newUserHotel.innerHTML = optionsHtml;
-
-        refreshUsers();
+        renderHotelCheckboxes();
+        refreshData();
 
       } catch (err) {
         showError("⚠️ Error: " + err.message);
@@ -215,18 +213,30 @@
       }
     }
 
-    async function refreshUsers() {
+    function renderHotelCheckboxes() {
+      const container = document.getElementById('hotels-checkboxes');
+      container.innerHTML = allHotels.map(h => `
+        <label class="checkbox-item">
+          <input type="checkbox" name="user-hotels" value="${h.id}">
+          ${h.name}
+        </label>
+      `).join('');
+    }
+
+    async function refreshData() {
       try {
-        const { data: users, error } = await _supabase.from('users').select('*');
-        if (!error) {
-          allUsers = users || [];
-        }
+        const [uRes, uhRes] = await Promise.all([
+          _supabase.from('users').select('*'),
+          _supabase.from('user_hotels').select('*')
+        ]);
+        if (!uRes.error) allUsers = uRes.data || [];
+        if (!uhRes.error) allUserHotels = uhRes.data || [];
       } catch (e) {
-        console.warn("Error cargando usuarios:", e);
+        console.warn("Error cargando datos:", e);
       }
     }
 
-    function loadUsers() {
+    async function loadUsersForHotel() {
       const hotelId = document.getElementById('hotel-select').value;
       const userSelect = document.getElementById('user-select');
       
@@ -236,7 +246,16 @@
         return;
       }
 
-      const filteredUsers = allUsers.filter(u => u.hotel_id === hotelId && u.is_active !== false);
+      await refreshData();
+
+      // Buscar IDs de usuarios asignados a este hotel en user_hotels
+      const assignedUserIds = allUserHotels
+        .filter(uh => uh.hotel_id === hotelId)
+        .map(uh => uh.user_id);
+
+      // Filtrar usuarios activos
+      const filteredUsers = allUsers.filter(u => assignedUserIds.includes(u.id) && u.is_active !== false);
+
       if (filteredUsers.length === 0) {
         userSelect.innerHTML = '<option value="">Sin usuarios en esta sede</option>';
         userSelect.disabled = true;
@@ -255,4 +274,196 @@
       if (!userId) return;
 
       selectedUser = allUsers.find(u => u.id === userId);
-      document
+      document.getElementById('selected-user-name').innerText = `👤 ${selectedUser.display_name || selectedUser.full_name}`;
+      
+      document.getElementById('step-select').style.display = 'none';
+      document.getElementById('step-pin').style.display = 'block';
+      clearPin();
+    }
+
+    function pressKey(num) {
+      if (currentPin.length < 4) {
+        currentPin += num;
+        updatePinDots();
+        if (currentPin.length === 4) validatePin();
+      }
+    }
+
+    function deleteLastPin() {
+      currentPin = currentPin.slice(0, -1);
+      updatePinDots();
+    }
+
+    function clearPin() {
+      currentPin = "";
+      updatePinDots();
+      hideMsgs();
+    }
+
+    function updatePinDots() {
+      for (let i = 0; i < 4; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        if (i < currentPin.length) dot.classList.add('filled');
+        else dot.classList.remove('filled');
+      }
+    }
+
+    function validatePin() {
+      if (currentPin === selectedUser.pin) {
+        openSession();
+      } else {
+        showError("❌ PIN Incorrecto");
+        setTimeout(() => clearPin(), 800);
+      }
+    }
+
+    async function openSession() {
+      document.getElementById('step-pin').style.display = 'none';
+      document.getElementById('step-session').style.display = 'block';
+      document.getElementById('main-card').classList.add('wide');
+
+      document.getElementById('session-user').innerText = selectedUser.display_name || selectedUser.full_name;
+      const roleBadge = document.getElementById('session-role');
+      roleBadge.innerText = selectedUser.role;
+      roleBadge.className = `badge-role ${selectedUser.role === 'ADMIN' ? 'badge-admin' : 'badge-op'}`;
+
+      if (selectedUser.role === 'ADMIN') {
+        document.getElementById('admin-panel').style.display = 'block';
+        document.getElementById('operator-panel').style.display = 'none';
+        await refreshData();
+        renderUsersTable();
+      } else {
+        document.getElementById('admin-panel').style.display = 'none';
+        document.getElementById('operator-panel').style.display = 'block';
+      }
+    }
+
+    async function createUser(e) {
+      e.preventDefault();
+      hideMsgs();
+
+      // Obtener hoteles seleccionados
+      const selectedHotels = Array.from(document.querySelectorAll('input[name="user-hotels"]:checked')).map(cb => cb.value);
+
+      if (selectedHotels.length === 0) {
+        showError("⚠️ Debes seleccionar al menos una sede/hotel.");
+        return;
+      }
+
+      const newUser = {
+        hotel_id: selectedHotels[0], // Hotel principal por compatibilidad
+        full_name: document.getElementById('new-user-fullname').value,
+        display_name: document.getElementById('new-user-display').value,
+        email: document.getElementById('new-user-email').value,
+        role: document.getElementById('new-user-role').value,
+        pin: document.getElementById('new-user-pin').value,
+        pin_hash: document.getElementById('new-user-pin').value,
+        pin_salt: 'default_salt',
+        area: 'GENERAL',
+        is_active: true
+      };
+
+      // 1. Insertar usuario
+      const { data: userCreated, error: uErr } = await _supabase.from('users').insert([newUser]).select();
+
+      if (uErr) {
+        showError("Error al guardar usuario: " + uErr.message);
+        return;
+      }
+
+      const createdId = userCreated[0].id;
+
+      // 2. Insertar relaciones multisede en user_hotels
+      const userHotelRows = selectedHotels.map(hId => ({
+        user_id: createdId,
+        hotel_id: hId
+      }));
+
+      const { error: uhErr } = await _supabase.from('user_hotels').insert(userHotelRows);
+
+      if (uhErr) {
+        showError("Usuario creado, pero hubo un error asignando sedes: " + uhErr.message);
+      } else {
+        showSuccess("¡Usuario registrado y asignado a sus sedes exitosamente!");
+        e.target.reset();
+        document.querySelectorAll('input[name="user-hotels"]').forEach(cb => cb.checked = false);
+        await refreshData();
+        renderUsersTable();
+      }
+    }
+
+    function getUserHotelsBadges(userId) {
+      const hotelIds = allUserHotels
+        .filter(uh => uh.user_id === userId)
+        .map(uh => uh.hotel_id);
+
+      if (hotelIds.length === 0) return '<span style="color:#999; font-size:11px;">Sin sedes</span>';
+
+      return hotelIds.map(hId => {
+        const hotel = allHotels.find(h => h.id === hId);
+        return hotel ? `<span class="badge-hotel">🏨 ${hotel.name}</span>` : '';
+      }).join('');
+    }
+
+    function renderUsersTable() {
+      const tbody = document.getElementById('users-table-body');
+      tbody.innerHTML = allUsers.map(u => `
+        <tr>
+          <td><b>${u.display_name || u.full_name}</b><br><small style="color:#666">${u.email || ''}</small></td>
+          <td>${getUserHotelsBadges(u.id)}</td>
+          <td><span class="badge-role ${u.role === 'ADMIN' ? 'badge-admin' : 'badge-op'}">${u.role}</span></td>
+          <td><code>${u.pin || '****'}</code></td>
+          <td>
+            <button onclick="toggleUserStatus('${u.id}', ${u.is_active !== false})" class="btn-sm btn-danger">
+              ${u.is_active !== false ? 'Desactivar' : 'Activar'}
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function toggleUserStatus(userId, currentActive) {
+      const { error } = await _supabase.from('users').update({ is_active: !currentActive }).eq('id', userId);
+      if (!error) {
+        await refreshData();
+        renderUsersTable();
+      }
+    }
+
+    function resetFlow() {
+      currentPin = "";
+      selectedUser = null;
+      document.getElementById('main-card').classList.remove('wide');
+      document.getElementById('hotel-select').value = "";
+      document.getElementById('user-select').value = "";
+      document.getElementById('user-select').disabled = true;
+      document.getElementById('step-pin').style.display = 'none';
+      document.getElementById('step-session').style.display = 'none';
+      document.getElementById('step-select').style.display = 'block';
+      hideMsgs();
+    }
+
+    function showError(msg) {
+      const errDiv = document.getElementById('error-msg');
+      errDiv.innerText = msg;
+      errDiv.style.display = 'block';
+    }
+
+    function showSuccess(msg) {
+      const succDiv = document.getElementById('success-msg');
+      succDiv.innerText = msg;
+      succDiv.style.display = 'block';
+      setTimeout(() => succDiv.style.display = 'none', 3000);
+    }
+
+    function hideMsgs() {
+      document.getElementById('error-msg').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'none';
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initApp();
+    });
+  </script>
+</body>
+</html>
