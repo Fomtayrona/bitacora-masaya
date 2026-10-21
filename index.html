@@ -52,7 +52,6 @@
     .badge-op { background: #e0e7ff; color: #3730a3; }
     .badge-hotel { background: #0284c7; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; display: inline-block; margin-right: 4px; margin-bottom: 2px; }
     
-    /* Badges de Prioridad */
     .prio-BAJA { background: #f1f5f9; color: #475569; }
     .prio-MEDIA { background: #e0f2fe; color: #0369a1; }
     .prio-ALTA { background: #fef3c7; color: #92400e; }
@@ -61,12 +60,11 @@
     .btn-sm { padding: 4px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; margin-right: 4px; }
     .btn-danger { background: #fee2e2; color: #991b1b; }
     .btn-edit { background: #e0f2fe; color: #0369a1; }
-    .btn-retry { background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 10px; }
+    .btn-retry { background: #0284c7; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 10px; font-weight: 600; }
 
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
     .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 450px; }
 
-    /* Timeline de Novedades */
     .incident-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 12px; }
     .incident-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .incident-title { font-weight: 700; font-size: 15px; color: #1a252f; }
@@ -218,7 +216,7 @@
         </div>
       </div>
 
-      <!-- VISTA OPERATIVO: NOVEDADES DE TURNO -->
+      <!-- VISTA OPERATIVO -->
       <div id="operator-panel" style="display: none;">
         <h3 style="font-size: 16px; margin-bottom: 12px; color: #1a252f;">📝 Registrar Novedad de Turno</h3>
         <form onsubmit="createIncident(event)">
@@ -257,7 +255,7 @@
     <div id="success-msg" class="success-msg"></div>
   </div>
 
-  <!-- MODAL PARA EDITAR SEDES -->
+  <!-- MODAL EDITAR SEDES -->
   <div id="edit-modal" class="modal">
     <div class="modal-content">
       <h3 style="font-size: 16px; margin-bottom: 10px; color: #1a252f;">🏨 Modificar Sedes de Colaborador</h3>
@@ -291,9 +289,10 @@
     let allCategories = [];
     let currentIncidents = [];
 
-    async function fetchRest(table) {
+    // Consulta con timeout estricto de 2500ms
+    async function fetchRest(table, ms = 2500) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), ms);
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*`, {
           headers: {
@@ -311,19 +310,27 @@
       }
     }
 
-    async function initApp() {
+    async function initApp(isRetry = false) {
       const hotelSelect = document.getElementById('hotel-select');
       hideMsgs();
+      hotelSelect.innerHTML = '<option value="">Cargando hoteles...</option>';
 
       try {
         if (window.supabase) {
           _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         }
 
-        allHotels = await fetchRest('hotels');
+        // Intento 1
+        try {
+          allHotels = await fetchRest('hotels', 2500);
+        } catch (e1) {
+          console.warn("Reintentando carga inicial de sedes...");
+          // Intento 2 automático si el primero expira
+          allHotels = await fetchRest('hotels', 3000);
+        }
 
         if (!allHotels || allHotels.length === 0) {
-          hotelSelect.innerHTML = '<option value="">No hay hoteles</option>';
+          hotelSelect.innerHTML = '<option value="">No hay hoteles disponibles</option>';
           return;
         }
 
@@ -334,7 +341,7 @@
         refreshData();
 
       } catch (err) {
-        showError("⚠️ Error al conectar. <br><button class=\"btn-retry\" onclick=\"initApp()\">Reintentar Conexión</button>");
+        showError("⚠️ No se pudo conectar con las sedes. <br><button class=\"btn-retry\" onclick=\"initApp(true)\">↻ Cargar Sedes Ahora</button>");
         hotelSelect.innerHTML = '<option value="">Error de conexión</option>';
       }
     }
@@ -361,7 +368,7 @@
         allUserHotels = userHotels || [];
         allCategories = (cats || []).filter(c => c.is_active !== false);
       } catch (e) {
-        console.warn("Error cargando datos:", e.message);
+        console.warn("Carga en segundo plano diferida:", e.message);
       }
     }
 
