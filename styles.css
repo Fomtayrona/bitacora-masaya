@@ -398,3 +398,48 @@ th { background: #f8fafc; color: #475569; font-weight: 600; }
   font-size: 13px;
   background: #ffffff;
 }
+
+/* Corrección de color y contraste en pantalla de Login */
+.login-card label,
+.login-card p,
+.login-card h2 {
+  color: #ffffff !important;
+}
+
+/* Teclado PIN en cuadrícula de 3 columnas */
+.pin-pad {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 10px !important;
+  max-width: 260px !important;
+  margin: 15px auto 0 auto !important;
+}
+
+.pin-btn {
+  padding: 14px;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background-color: #f9fafb;
+  color: #111827;
+  cursor: pointer;
+}
+
+.pin-btn-clear {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.pin-btn-enter {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.pin-display {
+  font-size: 24px;
+  letter-spacing: 8px;
+  text-align: center;
+  margin-top: 10px;
+  color: #ffffff;
+}
