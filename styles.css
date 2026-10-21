@@ -363,12 +363,38 @@ th { background: #f8fafc; color: #475569; font-weight: 600; }
 }
 /* Barra de Filtros de Novedades */
 .filters-bar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-  background: #f1f5f9;
-  padding: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: #f8fafc;
+  padding: 15px;
   border-radius: 10px;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   border: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.filters-bar .filter-item {
+  flex: 1;
+  min-width: 160px;
+}
+
+.filters-bar label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.filters-bar select, 
+.filters-bar input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #ffffff;
 }
