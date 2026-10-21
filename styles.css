@@ -361,3 +361,14 @@ th { background: #f8fafc; color: #475569; font-weight: 600; }
   width: 100%; 
   max-width: 450px; 
 }
+/* Barra de Filtros de Novedades */
+.filters-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  background: #f1f5f9;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #e2e8f0;
+}
