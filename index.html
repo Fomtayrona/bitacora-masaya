@@ -357,20 +357,47 @@
       `).join('');
     }
 
-    async function refreshData() {
-      try {
-        const [users, userHotels, cats] = await Promise.all([
-          fetchRest('users'),
-          fetchRest('user_hotels'),
-          fetchRest('incident_categories')
-        ]);
-        allUsers = users || [];
-        allUserHotels = userHotels || [];
-        allCategories = cats || [];
-      } catch (e) {
-        console.warn("Carga en segundo plano diferida:", e.message);
-      }
-    }
+async function refreshData() {
+  try {
+    const [users, userHotels, cats] = await Promise.all([
+      fetchRest('users'),
+      fetchRest('user_hotels'),
+      fetchRest('incident_categories')
+    ]);
+    allUsers = users || [];
+    allUserHotels = userHotels || [];
+    allCategories = cats || []; // Mantenemos activas e inactivas para la tabla
+  } catch (e) {
+    console.warn("Error cargando datos:", e.message);
+  }
+}
+
+function renderCategoriesTable() {
+  const tbody = document.getElementById('categories-table-body');
+  if (!tbody) return;
+
+  if (allCategories.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888;">No hay categorías creadas.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = allCategories.map(c => `
+    <tr>
+      <td><b>${c.name}</b></td>
+      <td>
+        <span class="badge-role ${c.is_active !== false ? 'badge-op' : 'badge-inactive'}">
+          ${c.is_active !== false ? 'Activa' : 'Inactiva'}
+        </span>
+      </td>
+      <td>
+        <button onclick="toggleCategoryStatus('${c.id}', ${c.is_active !== false})" class="btn-sm ${c.is_active !== false ? 'btn-warning' : 'btn-success'}">
+          ${c.is_active !== false ? 'Desactivar' : 'Activar'}
+        </button>
+        <button onclick="deleteCategory('${c.id}', '${c.name}')" class="btn-sm btn-danger">Borrar</button>
+      </td>
+    </tr>
+  `).join('');
+}
 
     async function loadUsersForHotel() {
       selectedHotelId = document.getElementById('hotel-select').value;
