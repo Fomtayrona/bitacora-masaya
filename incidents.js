@@ -18,32 +18,54 @@ const AREA_LABELS = {
 };
 
 /**
- * Carga el selector con los colaboradores activos asignados a la sede actual.
+ * Carga el selector con los colaboradores activos asignados a la sede actual haciendo consulta directa a la BD.
  */
 async function populateAssignedUsersSelect() {
   const select = document.getElementById('inc-assigned-to');
-  if (!select) return;
+  if (!select || !selectedHotelId) return;
 
-  // Si los arrays en memoria están vacíos, fuerza la recarga
-  if (!allUsers || allUsers.length === 0 || !allUserHotels || allUserHotels.length === 0) {
-    if (typeof refreshData === 'function') await refreshData();
+  select.innerHTML = '<option value="">Cargando colaboradores...</option>';
+
+  try {
+    // 1. Obtener los IDs de usuarios autorizados para este hotel
+    const { data: userHotels, error: uhError } = await _supabase
+      .from('user_hotels')
+      .select('user_id')
+      .eq('hotel_id', selectedHotelId);
+
+    if (uhError) throw uhError;
+
+    const userIds = (userHotels || []).map(uh => uh.user_id);
+
+    if (userIds.length === 0) {
+      select.innerHTML = '<option value="">-- Sin asignar (Para el área) --</option>';
+      return;
+    }
+
+    // 2. Traer los nombres de dichos usuarios
+    const { data: users, error: uError } = await _supabase
+      .from('users')
+      .select('id, full_name, display_name, is_active')
+      .in('id', userIds)
+      .order('full_name', { ascending: true });
+
+    if (uError) throw uError;
+
+    const activeUsers = (users || []).filter(u => u.is_active !== false);
+
+    if (activeUsers.length === 0) {
+      select.innerHTML = '<option value="">-- Sin asignar (Para el área) --</option>';
+      return;
+    }
+
+    select.innerHTML = '<option value="">-- Sin asignar (Para el área) --</option>' +
+      activeUsers.map(u => `<option value="${u.id}">${u.display_name || u.full_name}</option>`).join('');
+
+  } catch (err) {
+    console.error("Error cargando usuarios asignables:", err);
+    select.innerHTML = '<option value="">-- Sin asignar (Para el área) --</option>';
   }
-
-  const assignedUserIds = allUserHotels
-    .filter(uh => uh.hotel_id === selectedHotelId)
-    .map(uh => uh.user_id);
-
-  const activeHotelUsers = allUsers.filter(u => assignedUserIds.includes(u.id) && u.is_active !== false);
-
-  if (activeHotelUsers.length === 0) {
-    select.innerHTML = '<option value="">-- Sin colaboradores en esta sede --</option>';
-    return;
-  }
-
-  select.innerHTML = '<option value="">-- Sin asignar (Para el área) --</option>' +
-    activeHotelUsers.map(u => `<option value="${u.id}">${u.display_name || u.full_name}</option>`).join('');
 }
-
 /**
  * Llena el selector de categorías dinámicas activas.
  */
