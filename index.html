@@ -456,31 +456,37 @@
     }
 
     async function openSession() {
-      document.getElementById('step-pin').style.display = 'none';
-      document.getElementById('step-session').style.display = 'block';
-      document.getElementById('main-card').classList.add('wide');
+  document.getElementById('step-pin').style.display = 'none';
+  document.getElementById('step-session').style.display = 'block';
+  document.getElementById('main-card').classList.add('wide');
 
-      const currentHotel = allHotels.find(h => h.id === selectedHotelId);
-      document.getElementById('session-user').innerText = selectedUser.display_name || selectedUser.full_name;
-      document.getElementById('session-hotel-name').innerText = currentHotel ? `🏨 ${currentHotel.name}` : '';
-      
-      const roleBadge = document.getElementById('session-role');
-      roleBadge.innerText = selectedUser.role;
-      roleBadge.className = `badge-role ${selectedUser.role === 'ADMIN' ? 'badge-admin' : 'badge-op'}`;
+  const currentHotel = allHotels.find(h => h.id === selectedHotelId);
+  document.getElementById('session-user').innerText = selectedUser.display_name || selectedUser.full_name;
+  document.getElementById('session-hotel-name').innerText = currentHotel ? `🏨 ${currentHotel.name}` : '';
+  
+  const roleBadge = document.getElementById('session-role');
+  roleBadge.innerText = selectedUser.role;
+  roleBadge.className = `badge-role ${selectedUser.role === 'ADMIN' ? 'badge-admin' : 'badge-op'}`;
 
-      populateCategoriesSelect();
-      await loadIncidents();
+  // Cargar datos de novedades y categorías
+  populateCategoriesSelect();
+  await loadIncidents();
 
-      if (selectedUser.role === 'ADMIN') {
-        document.getElementById('admin-nav').style.display = 'flex';
-        await refreshData();
-        renderUsersTable();
-        renderCategoriesTable();
-      } else {
-        document.getElementById('admin-nav').style.display = 'none';
-      }
-    }
-
+  // Control de vista según el rol
+  const adminNav = document.getElementById('admin-nav');
+  if (selectedUser.role === 'ADMIN') {
+    adminNav.style.display = 'flex';
+    document.getElementById('tab-users').style.display = 'none';
+    document.getElementById('tab-categories').style.display = 'none';
+    document.getElementById('incidents-section').style.display = 'block';
+    await refreshData();
+    renderUsersTable();
+    renderCategoriesTable();
+  } else {
+    adminNav.style.display = 'none';
+    document.getElementById('incidents-section').style.display = 'block';
+  }
+}
     function switchAdminTab(tabName) {
       document.querySelectorAll('#admin-nav .tab-btn').forEach(b => b.classList.remove('active'));
       
