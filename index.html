@@ -95,7 +95,7 @@
     .filter-item label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px; }
     .filter-item select, .filter-item input { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; background: #ffffff; }
 
-    .my-tasks-banner { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+    .my-tasks-banner { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
   </style>
 </head>
 <body>
@@ -126,7 +126,7 @@
         <div class="pin-dot" id="dot-0"></div>
         <div class="pin-dot" id="dot-1"></div>
         <div class="pin-dot" id="dot-2"></div>
-        <="pin-dot" id="dot-3"></div>
+        <div class="pin-dot" id="dot-3"></div>
       </div>
 
       <div class="keypad">
@@ -158,7 +158,7 @@
         <button onclick="resetFlow()" class="btn-sm btn-danger">Cerrar Sesión</button>
       </div>
 
-<!-- BANNER DE MIS TAREAS PENDIENTES -->
+      <!-- BANNER DE MIS TAREAS PENDIENTES -->
       <div id="my-tasks-banner" class="my-tasks-banner" style="display: none;">
         <span id="my-tasks-count">👤 Tienes 0 tareas asignadas pendientes</span>
         <div style="display: flex; gap: 8px;">
@@ -184,20 +184,20 @@
               <select id="inc-category" required></select>
             </div>
             
-<div class="form-group">
-  <label>Área Destino</label>
-  <select id="inc-target-area" required>
-    <option value="GENERAL" selected>📢 General / Todo el Equipo</option>
-    <option value="RECEPCION">Recepción</option>
-    <option value="MANTENIMIENTO">Mantenimiento</option>
-    <option value="CAMARERIA">Camarería (Ama de Llaves)</option>
-    <option value="MESAS_BAR">Mesas y Bar</option>
-    <option value="COCINA">Cocina</option>
-    <option value="ADMINISTRACION">Administración</option>
-    <option value="GERENCIA">Gerencia</option>
-    <option value="SISTEMAS">Sistemas</option>
-  </select>
-</div>
+            <div class="form-group">
+              <label>Área Destino</label>
+              <select id="inc-target-area" required>
+                <option value="GENERAL" selected>📢 General / Todo el Equipo</option>
+                <option value="RECEPCION">Recepción</option>
+                <option value="MANTENIMIENTO">Mantenimiento</option>
+                <option value="CAMARERIA">Camarería (Ama de Llaves)</option>
+                <option value="MESAS_BAR">Mesas y Bar</option>
+                <option value="COCINA">Cocina</option>
+                <option value="ADMINISTRACION">Administración</option>
+                <option value="GERENCIA">Gerencia</option>
+                <option value="SISTEMAS">Sistemas</option>
+              </select>
+            </div>
 
             <div class="form-group">
               <label>Asignar a Persona (Opcional)</label>
@@ -248,21 +248,21 @@
             </select>
           </div>
 
-<div class="filter-item">
-  <label>Filtrar Área</label>
-  <select id="filter-area" onchange="filterIncidents()">
-    <option value="TODAS">Todas las áreas</option>
-    <option value="GENERAL">📢 General / Todo el Equipo</option>
-    <option value="RECEPCION">Recepción</option>
-    <option value="MANTENIMIENTO">Mantenimiento</option>
-    <option value="CAMARERIA">Camarería</option>
-    <option value="MESAS_BAR">Mesas y Bar</option>
-    <option value="COCINA">Cocina</option>
-    <option value="ADMINISTRACION">Administración</option>
-    <option value="GERENCIA">Gerencia</option>
-    <option value="SISTEMAS">Sistemas</option>
-  </select>
-</div>
+          <div class="filter-item">
+            <label>Filtrar Área</label>
+            <select id="filter-area" onchange="filterIncidents()">
+              <option value="TODAS">Todas las áreas</option>
+              <option value="GENERAL">📢 General / Todo el Equipo</option>
+              <option value="RECEPCION">Recepción</option>
+              <option value="MANTENIMIENTO">Mantenimiento</option>
+              <option value="CAMARERIA">Camarería</option>
+              <option value="MESAS_BAR">Mesas y Bar</option>
+              <option value="COCINA">Cocina</option>
+              <option value="ADMINISTRACION">Administración</option>
+              <option value="GERENCIA">Gerencia</option>
+              <option value="SISTEMAS">Sistemas</option>
+            </select>
+          </div>
 
           <div class="filter-item">
             <label>Filtrar Prioridad</label>
@@ -398,6 +398,8 @@
     </div>
   </div>
 
-<!-- Carga de Módulos JavaScript (v1.7) -->
-<script src="app.js?v=1.7"></script>
-<script src="incidents.js?v=1.7"></script>
+  <!-- Carga de Módulos JavaScript (v1.8) -->
+  <script src="app.js?v=1.8"></script>
+  <script src="incidents.js?v=1.8"></script>
+</body>
+</html>
