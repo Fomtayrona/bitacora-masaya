@@ -4,8 +4,8 @@
  * ============================================================================
  */
 
-const SUPABASE_URL = 'https://cbqilujgqscscryxszhh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNicWlsdWpncXNjc2NyeXhzemhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzODU0NDMsImV4cCI6MjA1NTk2MTQ0M30.6iG_5A_V4Z3b6Z9-gK6R4nQ3bO_9x2G6Y7U3P4_1_0k';
+const SUPABASE_URL = 'https://tsxecbjacdblbxprobdi.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_awz6uY_HmS1o3mf7Pgh55A_kAjbGfRQ';
 
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
