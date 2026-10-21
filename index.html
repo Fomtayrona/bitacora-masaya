@@ -10,7 +10,7 @@
     body { background-color: #1a252f; color: #333; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
     
     .card { background: white; width: 100%; max-width: 480px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; }
-    .card.wide { max-width: 700px; text-align: left; }
+    .card.wide { max-width: 750px; text-align: left; }
     
     h1 { color: #1a252f; font-size: 22px; margin-bottom: 6px; font-weight: 700; text-align: center; }
     p.subtitle { color: #666; font-size: 13px; margin-bottom: 20px; text-align: center; }
@@ -35,9 +35,7 @@
     
     .btn-back { background: none; border: none; color: #64748b; font-size: 13px; cursor: pointer; margin-top: 15px; text-decoration: underline; width: 100%; text-align: center; }
     .btn-primary { background: #1a252f; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px; }
-    .btn-primary:hover { background: #2c3e50; }
 
-    /* Tabla Admin */
     .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
     th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
@@ -55,7 +53,7 @@
     <h1>Bitácora Masaya</h1>
     <p class="subtitle">Control Operacional Recepción</p>
 
-    <!-- PASO 1: Selección de Hotel y Usuario -->
+    <!-- PASO 1: Selección -->
     <div id="step-select">
       <div class="form-group">
         <label>1. Selecciona Hotel</label>
@@ -108,7 +106,7 @@
         <button onclick="resetFlow()" class="btn-sm btn-danger">Cerrar Sesión</button>
       </div>
 
-      <!-- VISTA SOLO ADMIN -->
+      <!-- VISTA ADMIN -->
       <div id="admin-panel" style="display: none;">
         <h3 style="font-size: 15px; margin-bottom: 12px; color: #1a252f;">➕ Crear Nuevo Usuario</h3>
         <form onsubmit="createUser(event)">
@@ -184,8 +182,9 @@
       try {
         _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const { data: hotels, error } = await _supabase.from('hotels').select('*');
-        if (error) throw error;
+        // 1. Cargar hoteles primero
+        const { data: hotels, error: hErr } = await _supabase.from('hotels').select('*');
+        if (hErr) throw hErr;
         allHotels = hotels || [];
 
         const hotelSelect = document.getElementById('hotel-select');
@@ -202,7 +201,8 @@
         hotelSelect.innerHTML = optionsHtml;
         newUserHotel.innerHTML = optionsHtml;
 
-        await refreshUsers();
+        // 2. Cargar usuarios de fondo
+        refreshUsers();
 
       } catch (err) {
         showError("Error de carga: " + err.message);
@@ -211,7 +211,11 @@
 
     async function refreshUsers() {
       const { data: users, error } = await _supabase.from('users').select('*');
-      if (!error) allUsers = users || [];
+      if (error) {
+        showError("Error al cargar usuarios: " + error.message);
+      } else {
+        allUsers = users || [];
+      }
     }
 
     function loadUsers() {
@@ -226,7 +230,7 @@
 
       const filteredUsers = allUsers.filter(u => u.hotel_id === hotelId && u.is_active !== false);
       if (filteredUsers.length === 0) {
-        userSelect.innerHTML = '<option value="">Sin usuarios en este hotel</option>';
+        userSelect.innerHTML = '<option value="">Sin usuarios registrados en esta sede</option>';
         userSelect.disabled = true;
         return;
       }
@@ -330,4 +334,67 @@
       } else {
         showSuccess("¡Usuario creado exitosamente!");
         e.target.reset();
-        await refreshUsers
+        await refreshUsers();
+        renderUsersTable();
+      }
+    }
+
+    function renderUsersTable() {
+      const tbody = document.getElementById('users-table-body');
+      tbody.innerHTML = allUsers.map(u => `
+        <tr>
+          <td><b>${u.display_name || u.full_name}</b><br><small style="color:#666">${u.email || ''}</small></td>
+          <td><span class="badge-role ${u.role === 'ADMIN' ? 'badge-admin' : 'badge-op'}">${u.role}</span></td>
+          <td><code>${u.pin || '****'}</code></td>
+          <td>
+            <button onclick="toggleUserStatus('${u.id}', ${u.is_active !== false})" class="btn-sm btn-danger">
+              ${u.is_active !== false ? 'Desactivar' : 'Activar'}
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function toggleUserStatus(userId, currentActive) {
+      const { error } = await _supabase.from('users').update({ is_active: !currentActive }).eq('id', userId);
+      if (!error) {
+        await refreshUsers();
+        renderUsersTable();
+      }
+    }
+
+    function resetFlow() {
+      currentPin = "";
+      selectedUser = null;
+      document.getElementById('main-card').classList.remove('wide');
+      document.getElementById('hotel-select').value = "";
+      document.getElementById('user-select').value = "";
+      document.getElementById('user-select').disabled = true;
+      document.getElementById('step-pin').style.display = 'none';
+      document.getElementById('step-session').style.display = 'none';
+      document.getElementById('step-select').style.display = 'block';
+      hideMsgs();
+    }
+
+    function showError(msg) {
+      const errDiv = document.getElementById('error-msg');
+      errDiv.innerText = msg;
+      errDiv.style.display = 'block';
+    }
+
+    function showSuccess(msg) {
+      const succDiv = document.getElementById('success-msg');
+      succDiv.innerText = msg;
+      succDiv.style.display = 'block';
+      setTimeout(() => succDiv.style.display = 'none', 3000);
+    }
+
+    function hideMsgs() {
+      document.getElementById('error-msg').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'none';
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
