@@ -28,7 +28,6 @@ async function populateAssignedUsersSelect() {
   select.innerHTML = '<option value="">Cargando colaboradores...</option>';
 
   try {
-    // 1. Obtener los IDs de usuarios autorizados para este hotel
     const { data: userHotels, error: uhError } = await _supabase
       .from('user_hotels')
       .select('user_id')
@@ -43,7 +42,6 @@ async function populateAssignedUsersSelect() {
       return;
     }
 
-    // 2. Traer los nombres de dichos usuarios
     const { data: users, error: uError } = await _supabase
       .from('users')
       .select('id, full_name, display_name, is_active')
@@ -67,6 +65,7 @@ async function populateAssignedUsersSelect() {
     select.innerHTML = '<option value="">-- Sin asignar (Para el área) --</option>';
   }
 }
+
 /**
  * Llena el selector de categorías dinámicas activas.
  */
@@ -107,7 +106,7 @@ async function loadIncidents() {
     if (error) throw error;
     currentIncidents = data || [];
 
-    populateAssignedUsersSelect();
+    await populateAssignedUsersSelect();
     updateMyTasksBanner();
     filterIncidents();
 
@@ -124,9 +123,10 @@ function updateMyTasksBanner() {
   const countSpan = document.getElementById('my-tasks-count');
   if (!banner || !countSpan || !selectedUser) return;
 
-  const myPendingTasks = currentIncidents.filter(inc => 
-    inc.assigned_to_user_id === selectedUser.id && (inc.status || 'PENDIENTE') !== 'RESUELTO'
-  );
+  const myPendingTasks = currentIncidents.filter(inc => {
+    const assignedId = inc.assigned_to_user_id || (inc.assigned ? inc.assigned.id : null);
+    return assignedId === selectedUser.id && (inc.status || 'PENDIENTE') !== 'RESUELTO';
+  });
 
   if (myPendingTasks.length > 0) {
     countSpan.innerText = `👤 Tienes ${myPendingTasks.length} tarea(s) pendiente(s) asignada(s) directamente a ti.`;
@@ -142,7 +142,6 @@ function updateMyTasksBanner() {
 function filterMyTasks() {
   if (!selectedUser) return;
 
-  // 1. Limpiar o resetear los controles de selección en la UI
   const statusSelect = document.getElementById('filter-status');
   const areaSelect = document.getElementById('filter-area');
   const prioritySelect = document.getElementById('filter-priority');
@@ -153,14 +152,11 @@ function filterMyTasks() {
   if (prioritySelect) prioritySelect.value = 'TODAS';
   if (searchInput) searchInput.value = '';
 
-  // 2. Filtrar el listado completo cargado en memoria por el ID del usuario en sesión
   const myTasks = currentIncidents.filter(inc => {
-    // Valida si la tarea está asignada directamente al ID del usuario o a su objeto asignado
     const assignedId = inc.assigned_to_user_id || (inc.assigned ? inc.assigned.id : null);
     return assignedId === selectedUser.id;
   });
 
-  // 3. Renderizar el resultado de mis tareas
   renderIncidentsList(myTasks);
 }
 
@@ -178,7 +174,6 @@ function clearTaskFilters() {
   if (prioritySelect) prioritySelect.value = 'TODAS';
   if (searchInput) searchInput.value = '';
 
-  // Renderiza directamente la totalidad de novedades cargadas en memoria
   renderIncidentsList(currentIncidents);
 }
 
@@ -194,7 +189,7 @@ function filterIncidents() {
   const filtered = currentIncidents.filter(inc => {
     const incStatus = inc.status || 'PENDIENTE';
     const matchStatus = (statusFilter === 'TODOS') || (incStatus === statusFilter);
-    const matchArea = (areaFilter === 'TODAS') || ((inc.target_area || 'RECEPCION') === areaFilter);
+    const matchArea = (areaFilter === 'TODAS') || ((inc.target_area || 'GENERAL') === areaFilter);
     const matchPriority = (priorityFilter === 'TODAS') || (inc.priority === priorityFilter);
     
     const authorName = inc.author ? (inc.author.display_name || inc.author.full_name) : '';
@@ -232,7 +227,7 @@ function renderIncidentsList(incidentsToRender) {
     const author = inc.author ? (inc.author.display_name || inc.author.full_name) : 'Desconocido';
     const assignedTo = inc.assigned ? (inc.assigned.display_name || inc.assigned.full_name) : 'Sin asignar (Área)';
     const resolver = inc.resolver ? (inc.resolver.display_name || inc.resolver.full_name) : 'Desconocido';
-    const areaLabel = AREA_LABELS[inc.target_area] || inc.target_area || 'Recepción';
+    const areaLabel = AREA_LABELS[inc.target_area] || inc.target_area || 'General';
     
     const dateStr = new Date(inc.created_at).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
     const resolvedDateStr = inc.resolved_at ? new Date(inc.resolved_at).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) : '';
