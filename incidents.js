@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * BITÁCORA MASAYA - LÓGICA OPERACIONAL Y ASIGNACIÓN DE TAREAS (incidents.js)
+ * BITÁCORA MASAYA - MURO OPERATIVO EXPRESS (incidents.js v3.0)
  * ============================================================================
  */
 
@@ -18,9 +18,6 @@ const AREA_LABELS = {
   'SISTEMAS': 'Sistemas'
 };
 
-/**
- * Carga el selector con los colaboradores activos asignados a la sede actual haciendo consulta directa a la BD.
- */
 async function populateAssignedUsersSelect() {
   const select = document.getElementById('inc-assigned-to');
   if (!select || !selectedHotelId) return;
@@ -52,29 +49,20 @@ async function populateAssignedUsersSelect() {
 
     const activeUsers = (users || []).filter(u => u.is_active !== false);
 
-    if (activeUsers.length === 0) {
-      select.innerHTML = '<option value="">-- Sin asignar (Para el área) --</option>';
-      return;
-    }
-
     select.innerHTML = '<option value="">-- Sin asignar (Para el área) --</option>' +
       activeUsers.map(u => `<option value="${u.id}">${u.display_name || u.full_name}</option>`).join('');
 
   } catch (err) {
-    console.error("Error cargando usuarios asignables:", err);
+    console.error("Error cargando asignables:", err);
     select.innerHTML = '<option value="">-- Sin asignar (Para el área) --</option>';
   }
 }
 
-/**
- * Llena el selector de categorías dinámicas activas.
- */
 function populateCategoriesSelect() {
   const select = document.getElementById('inc-category');
   if (!select) return;
 
   const activeCategories = allCategories.filter(c => c.is_active !== false);
-
   if (activeCategories.length === 0) {
     select.innerHTML = '<option value="General">General</option>';
     return;
@@ -82,9 +70,6 @@ function populateCategoriesSelect() {
   select.innerHTML = activeCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
 }
 
-/**
- * Carga las novedades de la sede con autores, asignados y resolvedores desde Supabase.
- */
 async function loadIncidents() {
   const container = document.getElementById('incidents-timeline');
   if (!container) return;
@@ -115,9 +100,6 @@ async function loadIncidents() {
   }
 }
 
-/**
- * Muestra el banner superior si el usuario en sesión tiene tareas pendientes asignadas.
- */
 function updateMyTasksBanner() {
   const banner = document.getElementById('my-tasks-banner');
   const countSpan = document.getElementById('my-tasks-count');
@@ -136,61 +118,36 @@ function updateMyTasksBanner() {
   }
 }
 
-/**
- * Filtra el listado mostrando únicamente las tareas asignadas directamente al usuario en sesión.
- */
 function filterMyTasks() {
   if (!selectedUser) return;
-
-  const statusSelect = document.getElementById('filter-status');
-  const areaSelect = document.getElementById('filter-area');
-  const prioritySelect = document.getElementById('filter-priority');
-  const searchInput = document.getElementById('filter-search');
-
-  if (statusSelect) statusSelect.value = 'TODOS';
-  if (areaSelect) areaSelect.value = 'TODAS';
-  if (prioritySelect) prioritySelect.value = 'TODAS';
-  if (searchInput) searchInput.value = '';
-
   const myTasks = currentIncidents.filter(inc => {
     const assignedId = inc.assigned_to_user_id || (inc.assigned ? inc.assigned.id : null);
     return assignedId === selectedUser.id;
   });
-
   renderIncidentsList(myTasks);
 }
 
-/**
- * Restablece todos los controles de filtro y muestra la totalidad de las novedades.
- */
 function clearTaskFilters() {
   const statusSelect = document.getElementById('filter-status');
   const areaSelect = document.getElementById('filter-area');
-  const prioritySelect = document.getElementById('filter-priority');
   const searchInput = document.getElementById('filter-search');
 
   if (statusSelect) statusSelect.value = 'TODOS';
   if (areaSelect) areaSelect.value = 'TODAS';
-  if (prioritySelect) prioritySelect.value = 'TODAS';
   if (searchInput) searchInput.value = '';
 
   renderIncidentsList(currentIncidents);
 }
 
-/**
- * Aplica los criterios multidimensionales de filtrado.
- */
 function filterIncidents() {
   const statusFilter = document.getElementById('filter-status')?.value || 'TODOS';
   const areaFilter = document.getElementById('filter-area')?.value || 'TODAS';
-  const priorityFilter = document.getElementById('filter-priority')?.value || 'TODAS';
   const searchFilter = (document.getElementById('filter-search')?.value || '').toLowerCase().trim();
 
   const filtered = currentIncidents.filter(inc => {
     const incStatus = inc.status || 'PENDIENTE';
     const matchStatus = (statusFilter === 'TODOS') || (incStatus === statusFilter);
     const matchArea = (areaFilter === 'TODAS') || ((inc.target_area || 'GENERAL') === areaFilter);
-    const matchPriority = (priorityFilter === 'TODAS') || (inc.priority === priorityFilter);
     
     const authorName = inc.author ? (inc.author.display_name || inc.author.full_name) : '';
     const assignedName = inc.assigned ? (inc.assigned.display_name || inc.assigned.full_name) : '';
@@ -198,28 +155,24 @@ function filterIncidents() {
 
     const titleMatch = (inc.title || '').toLowerCase().includes(searchFilter);
     const descMatch = (inc.description || '').toLowerCase().includes(searchFilter);
-    const catMatch = (inc.category || '').toLowerCase().includes(searchFilter);
     const authorMatch = authorName.toLowerCase().includes(searchFilter);
     const assignedMatch = assignedName.toLowerCase().includes(searchFilter);
     const areaMatch = areaText.toLowerCase().includes(searchFilter);
 
-    const matchSearch = !searchFilter || titleMatch || descMatch || catMatch || authorMatch || assignedMatch || areaMatch;
+    const matchSearch = !searchFilter || titleMatch || descMatch || authorMatch || assignedMatch || areaMatch;
 
-    return matchStatus && matchArea && matchPriority && matchSearch;
+    return matchStatus && matchArea && matchSearch;
   });
 
   renderIncidentsList(filtered);
 }
 
-/**
- * Renderiza el muro de novedades con etiquetas de área, asignados, comentarios de cierre y opción de borrado Admin limpia.
- */
 function renderIncidentsList(incidentsToRender) {
   const container = document.getElementById('incidents-timeline');
   if (!container) return;
 
   if (incidentsToRender.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:#888; font-size:13px; padding:20px;">No se encontraron novedades con los filtros seleccionados.</p>';
+    container.innerHTML = '<p style="text-align:center; color:#888; font-size:13px; padding:20px;">No hay novedades para mostrar.</p>';
     return;
   }
 
@@ -240,7 +193,7 @@ function renderIncidentsList(incidentsToRender) {
         <div class="incident-header">
           <span class="incident-title">${inc.title}</span>
           <div>
-            ${inc.is_room_blocked ? '<span class="badge-room-blocked">🚨 HABITACIÓN BLOQUEADA</span>' : ''}
+            ${inc.is_room_blocked ? '<span class="badge-room-blocked">🚨 BLOQUEA HAB.</span>' : ''}
             <span class="badge-role prio-${inc.priority}">${inc.priority}</span>
             <span class="badge-role status-${status.replace(' ', '')}">${status}</span>
           </div>
@@ -248,7 +201,7 @@ function renderIncidentsList(incidentsToRender) {
         
         <div class="incident-meta">
           📍 <b>Área:</b> ${areaLabel} | 🏷️ <b>Categoría:</b> ${inc.category}<br>
-          👤 <b>Reportó:</b> ${author} | 🎯 <b>Asignado a:</b> ${assignedTo} | 🕒 ${dateStr}
+          👤 <b>Reportó:</b> ${author} | 🎯 <b>Asignado:</b> ${assignedTo} | 🕒 ${dateStr}
         </div>
         
         <div class="incident-body">${inc.description}</div>
@@ -263,10 +216,10 @@ function renderIncidentsList(incidentsToRender) {
           <span style="font-weight:600; color:#666;">Cambiar Estado:</span>
           <button onclick="updateIncidentStatus('${inc.id}', 'PENDIENTE')" class="btn-sm btn-danger">Pendiente</button>
           <button onclick="updateIncidentStatus('${inc.id}', 'PROCESO')" class="btn-sm btn-warning">En Proceso</button>
-          <button onclick="openResolveModal('${inc.id}')" class="btn-sm btn-success">✓ Resolver con Comentario</button>
+          <button onclick="openResolveModal('${inc.id}')" class="btn-sm btn-success">✓ Resolver</button>
           
           ${isAdmin ? `
-            <button onclick="deleteIncident('${inc.id}')" class="btn-sm btn-danger" style="margin-left: auto; background: #991b1b; color: white;">🗑️ Eliminar (Admin)</button>
+            <button onclick="deleteIncident('${inc.id}')" class="btn-sm btn-danger" style="margin-left: auto; background: #991b1b; color: white;">🗑️ Eliminar</button>
           ` : ''}
         </div>
       </div>
@@ -274,9 +227,6 @@ function renderIncidentsList(incidentsToRender) {
   }).join('');
 }
 
-/**
- * Registra una nueva novedad con área destino, asignado y estado de habitación.
- */
 async function createIncident(e) {
   e.preventDefault();
   hideMsgs();
@@ -301,21 +251,16 @@ async function createIncident(e) {
   if (error) {
     showError("Error al guardar novedad: " + error.message);
   } else {
-    showSuccess("¡Novedad registrada y asignada exitosamente!");
+    showSuccess("¡Novedad registrada exitosamente!");
     e.target.reset();
+    toggleNewIncidentForm();
     await loadIncidents();
   }
 }
 
-/**
- * Cambia el estado directo a PENDIENTE o EN PROCESO.
- */
 async function updateIncidentStatus(incId, newStatus) {
   hideMsgs();
-  const { error } = await _supabase
-    .from('incidents')
-    .update({ status: newStatus })
-    .eq('id', incId);
+  const { error } = await _supabase.from('incidents').update({ status: newStatus }).eq('id', incId);
 
   if (!error) {
     showSuccess("¡Estado actualizado!");
@@ -325,9 +270,6 @@ async function updateIncidentStatus(incId, newStatus) {
   }
 }
 
-/**
- * Abre el modal para capturar las observaciones al resolver.
- */
 function openResolveModal(incId) {
   resolvingIncidentId = incId;
   const inc = currentIncidents.find(i => i.id === incId);
@@ -343,15 +285,12 @@ function closeResolveModal() {
   resolvingIncidentId = null;
 }
 
-/**
- * Guarda la solución con comentario explicativo y usuario que resolvió.
- */
 async function confirmResolveIncident() {
   if (!resolvingIncidentId) return;
 
   const notes = document.getElementById('resolve-notes').value.trim();
   if (!notes) {
-    alert("Por favor escribe un comentario o explicación de la solución.");
+    alert("Escribe brevemente cómo se resolvió la novedad.");
     return;
   }
 
@@ -368,154 +307,33 @@ async function confirmResolveIncident() {
 
   if (!error) {
     closeResolveModal();
-    showSuccess("¡Novedad resuelta con observación guardada!");
+    showSuccess("¡Novedad resuelta!");
     await loadIncidents();
   } else {
     alert("Error al resolver novedad: " + error.message);
   }
 }
 
-/**
- * Elimina una novedad de forma permanente de la base de datos (Exclusivo para ADMINISTRADOR).
- */
 async function deleteIncident(incId) {
   const isAdmin = selectedUser && selectedUser.role && selectedUser.role.toUpperCase().includes('ADMIN');
-  
   if (!isAdmin) {
-    alert("No tienes permisos suficientes para realizar esta acción.");
+    alert("No tienes permisos suficientes.");
     return;
   }
 
   const incident = currentIncidents.find(i => i.id === incId);
   const title = incident ? incident.title : 'esta novedad';
 
-  const confirmDelete = confirm(`⚠️ ¿ESTÁS SEGURO?\n\nEsta acción eliminará de forma permanente la novedad:\n"${title}"\n\nEsta operación no se puede deshacer.`);
-  
-  if (!confirmDelete) return;
+  if (!confirm(`⚠️ ¿Deseas eliminar permanentemente:\n"${title}"?`)) return;
 
   hideMsgs();
-  
   try {
-    const { error } = await _supabase
-      .from('incidents')
-      .delete()
-      .eq('id', incId);
-
+    const { error } = await _supabase.from('incidents').delete().eq('id', incId);
     if (error) throw error;
 
-    showSuccess("¡Novedad eliminada permanentemente!");
+    showSuccess("¡Novedad eliminada!");
     await loadIncidents();
-
   } catch (err) {
-    console.error("Error al eliminar novedad:", err);
-    alert("Error al eliminar la novedad: " + err.message);
-    showError("Error al eliminar la novedad: " + err.message);
-  }
-}
-
-/* Funciones CRUD de Categorías */
-async function createCategory(e) {
-  e.preventDefault();
-  hideMsgs();
-  const catName = document.getElementById('new-category-name').value.trim();
-
-  const existingCat = allCategories.find(c => c.name.toLowerCase() === catName.toLowerCase());
-
-  if (existingCat) {
-    if (existingCat.is_active !== false) {
-      showError("⚠️ La categoría '" + catName + "' ya se encuentra activa.");
-      return;
-    } else {
-      const { error: updateErr } = await _supabase
-        .from('incident_categories')
-        .update({ is_active: true })
-        .eq('id', existingCat.id);
-
-      if (updateErr) {
-        showError("Error al reactivar categoría: " + updateErr.message);
-      } else {
-        showSuccess("¡Categoría reactivada exitosamente!");
-        e.target.reset();
-        await refreshData();
-        renderCategoriesTable();
-        populateCategoriesSelect();
-      }
-      return;
-    }
-  }
-
-  const { error } = await _supabase.from('incident_categories').insert([{ name: catName, is_active: true }]);
-
-  if (error) {
-    showError("Error al crear categoría: " + error.message);
-  } else {
-    showSuccess("¡Categoría creada!");
-    e.target.reset();
-    await refreshData();
-    renderCategoriesTable();
-    populateCategoriesSelect();
-  }
-}
-
-function renderCategoriesTable() {
-  const tbody = document.getElementById('categories-table-body');
-  if (!tbody) return;
-
-  if (allCategories.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888;">No hay categorías creadas.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = allCategories.map(c => `
-    <tr>
-      <td><b>${c.name}</b></td>
-      <td>
-        <span class="badge-role ${c.is_active !== false ? 'badge-op' : 'badge-inactive'}">
-          ${c.is_active !== false ? 'Activa' : 'Inactiva'}
-        </span>
-      </td>
-      <td>
-        <button onclick="toggleCategoryStatus('${c.id}', ${c.is_active !== false})" class="btn-sm ${c.is_active !== false ? 'btn-warning' : 'btn-success'}">
-          ${c.is_active !== false ? 'Desactivar' : 'Activar'}
-        </button>
-        <button onclick="deleteCategory('${c.id}', '${c.name}')" class="btn-sm btn-danger">Borrar</button>
-      </td>
-    </tr>
-  `).join('');
-}
-
-async function toggleCategoryStatus(catId, currentActive) {
-  hideMsgs();
-  const { error } = await _supabase
-    .from('incident_categories')
-    .update({ is_active: !currentActive })
-    .eq('id', catId);
-
-  if (!error) {
-    showSuccess("Estado de categoría actualizado.");
-    await refreshData();
-    renderCategoriesTable();
-    populateCategoriesSelect();
-  } else {
-    showError("Error al cambiar estado: " + error.message);
-  }
-}
-
-async function deleteCategory(catId, catName) {
-  if (!confirm(`¿Estás seguro de eliminar permanentemente la categoría "${catName}"?`)) return;
-
-  hideMsgs();
-  const { error } = await _supabase
-    .from('incident_categories')
-    .delete()
-    .eq('id', catId);
-
-  if (!error) {
-    showSuccess("Categoría eliminada permanentemente.");
-    await refreshData();
-    renderCategoriesTable();
-    populateCategoriesSelect();
-  } else {
-    showError("Error al eliminar categoría: " + error.message);
+    alert("Error al eliminar: " + err.message);
   }
 }
