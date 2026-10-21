@@ -7,6 +7,7 @@
 let resolvingIncidentId = null;
 
 const AREA_LABELS = {
+  'GENERAL': '📢 General / Todo el Equipo',
   'RECEPCION': 'Recepción',
   'MANTENIMIENTO': 'Mantenimiento',
   'CAMARERIA': 'Camarería (Ama de Llaves)',
