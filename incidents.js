@@ -20,15 +20,25 @@ const AREA_LABELS = {
 /**
  * Carga el selector con los colaboradores activos asignados a la sede actual.
  */
-function populateAssignedUsersSelect() {
+async function populateAssignedUsersSelect() {
   const select = document.getElementById('inc-assigned-to');
   if (!select) return;
+
+  // Si los arrays en memoria están vacíos, fuerza la recarga
+  if (!allUsers || allUsers.length === 0 || !allUserHotels || allUserHotels.length === 0) {
+    if (typeof refreshData === 'function') await refreshData();
+  }
 
   const assignedUserIds = allUserHotels
     .filter(uh => uh.hotel_id === selectedHotelId)
     .map(uh => uh.user_id);
 
   const activeHotelUsers = allUsers.filter(u => assignedUserIds.includes(u.id) && u.is_active !== false);
+
+  if (activeHotelUsers.length === 0) {
+    select.innerHTML = '<option value="">-- Sin colaboradores en esta sede --</option>';
+    return;
+  }
 
   select.innerHTML = '<option value="">-- Sin asignar (Para el área) --</option>' +
     activeHotelUsers.map(u => `<option value="${u.id}">${u.display_name || u.full_name}</option>`).join('');
