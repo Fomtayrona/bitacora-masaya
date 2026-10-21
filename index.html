@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bitácora Masaya - Control de Acceso y Novedades</title>
+  <title>Bitácora Masaya - Control Operacional</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; }
     body { background-color: #1a252f; color: #333; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
     
     .card { background: white; width: 100%; max-width: 480px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; }
-    .card.wide { max-width: 920px; text-align: left; }
+    .card.wide { max-width: 940px; text-align: left; }
     
     h1 { color: #1a252f; font-size: 22px; margin-bottom: 6px; font-weight: 700; text-align: center; }
     p.subtitle { color: #666; font-size: 13px; margin-bottom: 20px; text-align: center; }
@@ -53,6 +53,11 @@
     .badge-inactive { background: #f1f5f9; color: #64748b; }
     .badge-hotel { background: #0284c7; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; display: inline-block; margin-right: 4px; margin-bottom: 2px; }
     
+    /* Estados de Incidencia */
+    .status-PENDIENTE { background: #fee2e2; color: #991b1b; }
+    .status-PROCESO { background: #fef3c7; color: #92400e; }
+    .status-RESUELTO { background: #dcfce7; color: #166534; }
+
     .prio-BAJA { background: #f1f5f9; color: #475569; }
     .prio-MEDIA { background: #e0f2fe; color: #0369a1; }
     .prio-ALTA { background: #fef3c7; color: #92400e; }
@@ -72,7 +77,8 @@
     .incident-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .incident-title { font-weight: 700; font-size: 15px; color: #1a252f; }
     .incident-meta { font-size: 11px; color: #64748b; margin-bottom: 8px; }
-    .incident-body { font-size: 13px; color: #334155; line-height: 1.4; white-space: pre-line; }
+    .incident-body { font-size: 13px; color: #334155; line-height: 1.4; white-space: pre-line; margin-bottom: 10px; }
+    .incident-actions { display: flex; gap: 6px; align-items: center; border-top: 1px dashed #e2e8f0; padding-top: 8px; font-size: 12px; }
 
     .nav-tabs { display: flex; gap: 10px; border-bottom: 2px solid #e2e8f0; margin-bottom: 20px; }
     .tab-btn { background: none; border: none; padding: 8px 16px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
@@ -139,88 +145,15 @@
         <button onclick="resetFlow()" class="btn-sm btn-danger">Cerrar Sesión</button>
       </div>
 
-      <!-- VISTA ADMIN -->
-      <div id="admin-panel" style="display: none;">
-        <div class="nav-tabs">
-          <button class="tab-btn active" onclick="switchAdminTab('users')">👥 Colaboradores</button>
-          <button class="tab-btn" onclick="switchAdminTab('categories')">🏷️ Categorías Novedades</button>
-        </div>
-
-        <!-- TAB USUARIOS -->
-        <div id="tab-users">
-          <h3 style="font-size: 15px; margin-bottom: 12px; color: #1a252f;">➕ Crear Nuevo Usuario</h3>
-          <form onsubmit="createUser(event)">
-            <div class="grid-form">
-              <div class="form-group full-width">
-                <label>Sedes / Hoteles Asignados</label>
-                <div id="hotels-checkboxes" class="checkbox-group"></div>
-              </div>
-              <div class="form-group">
-                <label>Nombre Completo</label>
-                <input type="text" id="new-user-fullname" placeholder="Ej: Maria Perez" required />
-              </div>
-              <div class="form-group">
-                <label>Nombre Display</label>
-                <input type="text" id="new-user-display" placeholder="Ej: Maria P." required />
-              </div>
-              <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="new-user-email" placeholder="maria@masaya.com" required />
-              </div>
-              <div class="form-group">
-                <label>Rol</label>
-                <select id="new-user-role">
-                  <option value="OPERATIVO">OPERATIVO</option>
-                  <option value="ADMIN">ADMIN</option>
-                </select>
-              </div>
-              <div class="form-group full-width">
-                <label>PIN (4 dígitos)</label>
-                <input type="password" id="new-user-pin" maxlength="4" pattern="\d{4}" placeholder="1234" required />
-              </div>
-            </div>
-            <button type="submit" class="btn-primary">Guardar Usuario</button>
-          </form>
-
-          <h3 style="font-size: 15px; margin: 20px 0 10px 0; color: #1a252f;">👥 Colaboradores Registrados</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Sedes Autorizadas</th>
-                <th>Rol</th>
-                <th>PIN</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="users-table-body"></tbody>
-          </table>
-        </div>
-
-        <!-- TAB CATEGORIAS -->
-        <div id="tab-categories" style="display: none;">
-          <h3 style="font-size: 15px; margin-bottom: 12px; color: #1a252f;">➕ Agregar Nueva Categoría</h3>
-          <form onsubmit="createCategory(event)" style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <input type="text" id="new-category-name" placeholder="Ej: Mantenimiento Preventivo" required style="flex:1;" />
-            <button type="submit" class="btn-primary" style="margin:0; width: auto; padding: 0 20px;">Agregar</button>
-          </form>
-
-          <h3 style="font-size: 15px; margin-bottom: 10px; color: #1a252f;">Listado de Categorías</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre Categoría</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="categories-table-body"></tbody>
-          </table>
-        </div>
+      <!-- PESTAÑAS ADMIN -->
+      <div id="admin-nav" class="nav-tabs" style="display: none;">
+        <button class="tab-btn active" onclick="switchAdminTab('incidents')">📋 Novedades de Turno</button>
+        <button class="tab-btn" onclick="switchAdminTab('users')">👥 Colaboradores</button>
+        <button class="tab-btn" onclick="switchAdminTab('categories')">🏷️ Categorías</button>
       </div>
 
-      <!-- VISTA OPERATIVO -->
-      <div id="operator-panel" style="display: none;">
+      <!-- CONTENEDOR NOVEDADES (Compartido Operativo / Admin) -->
+      <div id="incidents-section">
         <h3 style="font-size: 16px; margin-bottom: 12px; color: #1a252f;">📝 Registrar Novedad de Turno</h3>
         <form onsubmit="createIncident(event)">
           <div class="grid-form">
@@ -243,7 +176,7 @@
             </div>
             <div class="form-group full-width">
               <label>Detalle de la Novedad</label>
-              <textarea id="inc-description" placeholder="Escribe aquí las observaciones, acciones tomadas o seguimiento necesario..." required></textarea>
+              <textarea id="inc-description" placeholder="Escribe observaciones, acciones tomadas o seguimiento necesario..." required></textarea>
             </div>
           </div>
           <button type="submit" class="btn-primary">Publicar Novedad</button>
@@ -251,6 +184,78 @@
 
         <h3 style="font-size: 16px; margin: 25px 0 12px 0; color: #1a252f;">📋 Historial de Novedades de Turno</h3>
         <div id="incidents-timeline">Cargando novedades...</div>
+      </div>
+
+      <!-- TAB USUARIOS (Solo Admin) -->
+      <div id="tab-users" style="display: none;">
+        <h3 style="font-size: 15px; margin-bottom: 12px; color: #1a252f;">➕ Crear Nuevo Usuario</h3>
+        <form onsubmit="createUser(event)">
+          <div class="grid-form">
+            <div class="form-group full-width">
+              <label>Sedes / Hoteles Asignados</label>
+              <div id="hotels-checkboxes" class="checkbox-group"></div>
+            </div>
+            <div class="form-group">
+              <label>Nombre Completo</label>
+              <input type="text" id="new-user-fullname" placeholder="Ej: Maria Perez" required />
+            </div>
+            <div class="form-group">
+              <label>Nombre Display</label>
+              <input type="text" id="new-user-display" placeholder="Ej: Maria P." required />
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="new-user-email" placeholder="maria@masaya.com" required />
+            </div>
+            <div class="form-group">
+              <label>Rol</label>
+              <select id="new-user-role">
+                <option value="OPERATIVO">OPERATIVO</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label>PIN (4 dígitos)</label>
+              <input type="password" id="new-user-pin" maxlength="4" pattern="\d{4}" placeholder="1234" required />
+            </div>
+          </div>
+          <button type="submit" class="btn-primary">Guardar Usuario</button>
+        </form>
+
+        <h3 style="font-size: 15px; margin: 20px 0 10px 0; color: #1a252f;">👥 Colaboradores Registrados</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Sedes Autorizadas</th>
+              <th>Rol</th>
+              <th>PIN</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body"></tbody>
+        </table>
+      </div>
+
+      <!-- TAB CATEGORIAS (Solo Admin) -->
+      <div id="tab-categories" style="display: none;">
+        <h3 style="font-size: 15px; margin-bottom: 12px; color: #1a252f;">➕ Agregar Nueva Categoría</h3>
+        <form onsubmit="createCategory(event)" style="display: flex; gap: 10px; margin-bottom: 20px;">
+          <input type="text" id="new-category-name" placeholder="Ej: Mantenimiento Preventivo" required style="flex:1;" />
+          <button type="submit" class="btn-primary" style="margin:0; width: auto; padding: 0 20px;">Agregar</button>
+        </form>
+
+        <h3 style="font-size: 15px; margin-bottom: 10px; color: #1a252f;">Listado de Categorías</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre Categoría</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="categories-table-body"></tbody>
+        </table>
       </div>
     </div>
 
@@ -312,7 +317,7 @@
       }
     }
 
-    async function initApp(isRetry = false) {
+    async function initApp() {
       const hotelSelect = document.getElementById('hotel-select');
       hideMsgs();
       hotelSelect.innerHTML = '<option value="">Cargando hoteles...</option>';
@@ -325,7 +330,6 @@
         try {
           allHotels = await fetchRest('hotels', 2500);
         } catch (e1) {
-          console.warn("Reintentando carga inicial de sedes...");
           allHotels = await fetchRest('hotels', 3000);
         }
 
@@ -341,7 +345,7 @@
         refreshData();
 
       } catch (err) {
-        showError("⚠️ No se pudo conectar con las sedes. <br><button class=\"btn-retry\" onclick=\"initApp(true)\">↻ Cargar Sedes Ahora</button>");
+        showError("⚠️ No se pudo conectar con las sedes. <br><button class=\"btn-retry\" onclick=\"initApp()\">↻ Cargar Sedes Ahora</button>");
         hotelSelect.innerHTML = '<option value="">Error de conexión</option>';
       }
     }
@@ -357,47 +361,20 @@
       `).join('');
     }
 
-async function refreshData() {
-  try {
-    const [users, userHotels, cats] = await Promise.all([
-      fetchRest('users'),
-      fetchRest('user_hotels'),
-      fetchRest('incident_categories')
-    ]);
-    allUsers = users || [];
-    allUserHotels = userHotels || [];
-    allCategories = cats || []; // Mantenemos activas e inactivas para la tabla
-  } catch (e) {
-    console.warn("Error cargando datos:", e.message);
-  }
-}
-
-function renderCategoriesTable() {
-  const tbody = document.getElementById('categories-table-body');
-  if (!tbody) return;
-
-  if (allCategories.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888;">No hay categorías creadas.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = allCategories.map(c => `
-    <tr>
-      <td><b>${c.name}</b></td>
-      <td>
-        <span class="badge-role ${c.is_active !== false ? 'badge-op' : 'badge-inactive'}">
-          ${c.is_active !== false ? 'Activa' : 'Inactiva'}
-        </span>
-      </td>
-      <td>
-        <button onclick="toggleCategoryStatus('${c.id}', ${c.is_active !== false})" class="btn-sm ${c.is_active !== false ? 'btn-warning' : 'btn-success'}">
-          ${c.is_active !== false ? 'Desactivar' : 'Activar'}
-        </button>
-        <button onclick="deleteCategory('${c.id}', '${c.name}')" class="btn-sm btn-danger">Borrar</button>
-      </td>
-    </tr>
-  `).join('');
-}
+    async function refreshData() {
+      try {
+        const [users, userHotels, cats] = await Promise.all([
+          fetchRest('users'),
+          fetchRest('user_hotels'),
+          fetchRest('incident_categories')
+        ]);
+        allUsers = users || [];
+        allUserHotels = userHotels || [];
+        allCategories = cats || [];
+      } catch (e) {
+        console.warn("Carga en segundo plano diferida:", e.message);
+      }
+    }
 
     async function loadUsersForHotel() {
       selectedHotelId = document.getElementById('hotel-select').value;
@@ -491,32 +468,35 @@ function renderCategoriesTable() {
       roleBadge.innerText = selectedUser.role;
       roleBadge.className = `badge-role ${selectedUser.role === 'ADMIN' ? 'badge-admin' : 'badge-op'}`;
 
+      populateCategoriesSelect();
+      await loadIncidents();
+
       if (selectedUser.role === 'ADMIN') {
-        document.getElementById('admin-panel').style.display = 'block';
-        document.getElementById('operator-panel').style.display = 'none';
+        document.getElementById('admin-nav').style.display = 'flex';
         await refreshData();
         renderUsersTable();
         renderCategoriesTable();
       } else {
-        document.getElementById('admin-panel').style.display = 'none';
-        document.getElementById('operator-panel').style.display = 'block';
-        populateCategoriesSelect();
-        await loadIncidents();
+        document.getElementById('admin-nav').style.display = 'none';
       }
     }
 
-    function switchAdminTab(tab) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      if (tab === 'users') {
+    function switchAdminTab(tabName) {
+      document.querySelectorAll('#admin-nav .tab-btn').forEach(b => b.classList.remove('active'));
+      
+      document.getElementById('incidents-section').style.display = 'none';
+      document.getElementById('tab-users').style.display = 'none';
+      document.getElementById('tab-categories').style.display = 'none';
+
+      if (tabName === 'incidents') {
+        document.getElementById('incidents-section').style.display = 'block';
+      } else if (tabName === 'users') {
         document.getElementById('tab-users').style.display = 'block';
-        document.getElementById('tab-categories').style.display = 'none';
-        event.target.classList.add('active');
-      } else {
-        document.getElementById('tab-users').style.display = 'none';
+      } else if (tabName === 'categories') {
         document.getElementById('tab-categories').style.display = 'block';
-        event.target.classList.add('active');
-        renderCategoriesTable();
       }
+      
+      event.target.classList.add('active');
     }
 
     function populateCategoriesSelect() {
@@ -552,23 +532,48 @@ function renderCategoriesTable() {
         container.innerHTML = currentIncidents.map(inc => {
           const author = inc.users ? (inc.users.display_name || inc.users.full_name) : 'Desconocido';
           const dateStr = new Date(inc.created_at).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+          const status = inc.status || 'PENDIENTE';
 
           return `
             <div class="incident-card">
               <div class="incident-header">
                 <span class="incident-title">${inc.title}</span>
-                <span class="badge-role prio-${inc.priority}">${inc.priority}</span>
+                <div>
+                  <span class="badge-role prio-${inc.priority}">${inc.priority}</span>
+                  <span class="badge-role status-${status.replace(' ', '')}">${status}</span>
+                </div>
               </div>
               <div class="incident-meta">
                 🏷️ <b>${inc.category}</b> | 👤 <b>${author}</b> | 🕒 ${dateStr}
               </div>
               <div class="incident-body">${inc.description}</div>
+              
+              <div class="incident-actions">
+                <span style="font-weight:600; color:#666;">Cambiar Estado:</span>
+                <button onclick="updateIncidentStatus('${inc.id}', 'PENDIENTE')" class="btn-sm btn-danger">Pendiente</button>
+                <button onclick="updateIncidentStatus('${inc.id}', 'PROCESO')" class="btn-sm btn-warning">En Proceso</button>
+                <button onclick="updateIncidentStatus('${inc.id}', 'RESUELTO')" class="btn-sm btn-success">Resuelto</button>
+              </div>
             </div>
           `;
         }).join('');
 
       } catch (err) {
         container.innerHTML = `<p style="color:red; font-size:12px;">Error al cargar novedades: ${err.message}</p>`;
+      }
+    }
+
+    async function updateIncidentStatus(incId, newStatus) {
+      const { error } = await _supabase
+        .from('incidents')
+        .update({ status: newStatus })
+        .eq('id', incId);
+
+      if (!error) {
+        showSuccess("¡Estado actualizado!");
+        await loadIncidents();
+      } else {
+        showError("Error al actualizar estado: " + error.message);
       }
     }
 
