@@ -1,445 +1,420 @@
 /**
  * ============================================================================
- * BITÁCORA MASAYA - ESTILOS GLOBALES Y COMPONENTES VISUALES
- * ============================================================================
- * Propósito:
- *   Contener todas las reglas de diseño visual, arquitectura responsiva, 
- *   componentes de interfaz (tarjetas, botones, formularios, tablas, badges) 
- *   y estados interactivos para el sistema Bitácora Masaya.
- *
- * Secciones:
- *   1. Resets y Estilos Globales
- *   2. Contenedores y Tarjetas (.card, .card.wide)
- *   3. Formularios y Teclado PIN (.pin-display, .keypad)
- *   4. Tablas y Tableros (.nav-tabs)
- *   5. Badges de Rol, Prioridad y Estado (.badge-role, .prio-*, .status-*)
- *   6. Tarjetas de Novedades de Turno (.incident-card)
- *   7. Modales de Edición (.modal)
+ * BITÁCORA MASAYA - ESTILOS MÍNIMOS OPERATIVOS (styles.css v3.2)
  * ============================================================================
  */
 
-/* 1. Resets y Estilos Globales */
-* { 
-  box-sizing: border-box; 
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-  margin: 0; 
-  padding: 0; 
+/* Reset Básico */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-body { 
-  background-color: #1a252f; 
-  color: #333; 
-  min-height: 100vh; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  padding: 20px; 
-}
-
-/* 2. Contenedores y Tarjetas Base */
-.card { 
-  background: white; 
-  width: 100%; 
-  max-width: 480px; 
-  padding: 30px; 
-  border-radius: 16px; 
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
-  text-align: center; 
-}
-
-.card.wide { 
-  max-width: 940px; 
-  text-align: left; 
-}
-
-h1 { 
-  color: #1a252f; 
-  font-size: 22px; 
-  margin-bottom: 6px; 
-  font-weight: 700; 
-  text-align: center; 
-}
-
-p.subtitle { 
-  color: #666; 
-  font-size: 13px; 
-  margin-bottom: 20px; 
-  text-align: center; 
-}
-
-/* 3. Formularios e Inputs */
-.form-group { 
-  text-align: left; 
-  margin-bottom: 15px; 
-}
-
-label { 
-  font-size: 12px; 
-  font-weight: 600; 
-  color: #555; 
-  text-transform: uppercase; 
-  letter-spacing: 0.5px; 
-  display: block; 
-  margin-bottom: 6px; 
-}
-
-select, input, textarea { 
-  width: 100%; 
-  padding: 10px 12px; 
-  border: 1px solid #ccc; 
-  border-radius: 8px; 
-  font-size: 14px; 
-  outline: none; 
-  background: #fff; 
-}
-
-textarea { 
-  resize: vertical; 
-  min-height: 80px; 
-}
-
-select:focus, input:focus, textarea:focus { 
-  border-color: #007bff; 
-}
-
-.checkbox-group { 
-  display: flex; 
-  flex-wrap: wrap; 
-  gap: 10px; 
-  background: #f8fafc; 
-  padding: 12px; 
-  border: 1px solid #e2e8f0; 
-  border-radius: 8px; 
-}
-
-.checkbox-item { 
-  display: flex; 
-  align-items: center; 
-  gap: 6px; 
-  font-size: 13px; 
-  font-weight: 500; 
-  color: #334155; 
-  cursor: pointer; 
-}
-
-.checkbox-item input { 
-  width: auto; 
-  margin: 0; 
-  cursor: pointer; 
-}
-
-/* 4. Componente Teclado PIN */
-.pin-display { 
-  display: flex; 
-  justify-content: center; 
-  gap: 12px; 
-  margin: 20px 0; 
-}
-
-.pin-dot { 
-  width: 16px; 
-  height: 16px; 
-  border-radius: 50%; 
-  border: 2px solid #ccc; 
-  transition: all 0.2s; 
-}
-
-.pin-dot.filled { 
-  background-color: #1a252f; 
-  border-color: #1a252f; 
-}
-
-.keypad { 
-  display: grid; 
-  grid-template-columns: repeat(3, 1fr); 
-  gap: 12px; 
-  margin-top: 15px; 
-}
-
-.key { 
-  background: #f4f6f8; 
-  border: none; 
-  padding: 18px 0; 
-  font-size: 20px; 
-  font-weight: 600; 
-  border-radius: 10px; 
-  cursor: pointer; 
-  color: #1a252f; 
-}
-
-.key:active { 
-  background: #e2e8f0; 
-}
-
-.key.action { 
-  font-size: 14px; 
-  background: #fee2e2; 
-  color: #991b1b; 
-}
-
-/* 5. Mensajes y Notificaciones */
-.user-badge { 
-  background: #e0f2fe; 
-  color: #0369a1; 
-  padding: 8px 12px; 
-  border-radius: 6px; 
-  font-weight: 600; 
-  font-size: 14px; 
-  margin-bottom: 15px; 
-  display: inline-block; 
-}
-
-.error-msg { 
-  color: #dc2626; 
-  font-size: 13px; 
-  margin-top: 15px; 
-  min-height: 18px; 
-  font-weight: 500; 
-  background: #fef2f2; 
-  padding: 8px; 
-  border-radius: 6px; 
-  display: none; 
-  text-align: center; 
-  word-break: break-word; 
-}
-
-.success-msg { 
-  color: #166534; 
-  font-size: 13px; 
-  margin-top: 15px; 
-  background: #f0fdf4; 
-  padding: 8px; 
-  border-radius: 6px; 
-  display: none; 
-  text-align: center; 
-}
-
-/* 6. Botones Generales */
-.btn-back { 
-  background: none; 
-  border: none; 
-  color: #64748b; 
-  font-size: 13px; 
-  cursor: pointer; 
-  margin-top: 15px; 
-  text-decoration: underline; 
-  width: 100%; 
-  text-align: center; 
-}
-
-.btn-primary { 
-  background: #1a252f; 
-  color: white; 
-  border: none; 
-  padding: 12px; 
-  border-radius: 8px; 
-  font-weight: 600; 
-  cursor: pointer; 
-  width: 100%; 
-  margin-top: 10px; 
-}
-
-.btn-sm { 
-  padding: 4px 8px; 
-  font-size: 11px; 
-  border-radius: 4px; 
-  border: none; 
-  cursor: pointer; 
-  margin-right: 4px; 
-}
-
-.btn-danger { background: #fee2e2; color: #991b1b; }
-.btn-warning { background: #fef3c7; color: #92400e; }
-.btn-success { background: #dcfce7; color: #166534; }
-.btn-edit { background: #e0f2fe; color: #0369a1; }
-.btn-retry { background: #0284c7; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 10px; font-weight: 600; }
-
-/* 7. Grid, Tablas y Pestañas */
-.grid-form { 
-  display: grid; 
-  grid-template-columns: 1fr 1fr; 
-  gap: 12px; 
-  margin-bottom: 20px; 
-}
-
-.full-width { grid-column: span 2; }
-
-table { 
-  width: 100%; 
-  border-collapse: collapse; 
-  margin-top: 15px; 
-  font-size: 13px; 
-}
-
-th, td { 
-  padding: 10px; 
-  border-bottom: 1px solid #e2e8f0; 
-  text-align: left; 
-}
-
-th { background: #f8fafc; color: #475569; font-weight: 600; }
-
-.nav-tabs { 
-  display: flex; 
-  gap: 10px; 
-  border-bottom: 2px solid #e2e8f0; 
-  margin-bottom: 20px; 
-}
-
-.tab-btn { 
-  background: none; 
-  border: none; 
-  padding: 8px 16px; 
-  font-weight: 600; 
-  color: #64748b; 
-  cursor: pointer; 
-  border-bottom: 2px solid transparent; 
-  margin-bottom: -2px; 
-}
-
-.tab-btn.active { 
-  color: #0284c7; 
-  border-bottom-color: #0284c7; 
-}
-
-/* 8. Badges e Indicadores Visuales */
-.badge-role { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-.badge-admin { background: #fef3c7; color: #92400e; }
-.badge-op { background: #e0e7ff; color: #3730a3; }
-.badge-inactive { background: #f1f5f9; color: #64748b; }
-.badge-hotel { background: #0284c7; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; display: inline-block; margin-right: 4px; margin-bottom: 2px; }
-
-/* Badges de Estado y Prioridad */
-.status-PENDIENTE { background: #fee2e2; color: #991b1b; }
-.status-PROCESO { background: #fef3c7; color: #92400e; }
-.status-RESUELTO { background: #dcfce7; color: #166534; }
-
-.prio-BAJA { background: #f1f5f9; color: #475569; }
-.prio-MEDIA { background: #e0f2fe; color: #0369a1; }
-.prio-ALTA { background: #fef3c7; color: #92400e; }
-.prio-CRITICA { background: #fee2e2; color: #991b1b; }
-
-/* 9. Tarjetas de Novedades (Timeline) */
-.incident-card { 
-  background: #f8fafc; 
-  border: 1px solid #e2e8f0; 
-  border-radius: 10px; 
-  padding: 15px; 
-  margin-bottom: 12px; 
-}
-
-.incident-header { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  margin-bottom: 8px; 
-}
-
-.incident-title { font-weight: 700; font-size: 15px; color: #1a252f; }
-.incident-meta { font-size: 11px; color: #64748b; margin-bottom: 8px; }
-.incident-body { font-size: 13px; color: #334155; line-height: 1.4; white-space: pre-line; margin-bottom: 10px; }
-.incident-actions { display: flex; gap: 6px; align-items: center; border-top: 1px dashed #e2e8f0; padding-top: 8px; font-size: 12px; }
-
-/* 10. Modales */
-.modal { 
-  display: none; 
-  position: fixed; 
-  top: 0; 
-  left: 0; 
-  width: 100%; 
-  height: 100%; 
-  background: rgba(0,0,0,0.5); 
-  align-items: center; 
-  justify-content: center; 
-  z-index: 1000; 
-}
-
-.modal-content { 
-  background: white; 
-  padding: 25px; 
-  border-radius: 12px; 
-  width: 100%; 
-  max-width: 450px; 
-}
-/* Barra de Filtros de Novedades */
-.filters-bar {
+body {
+  background-color: #0f172a;
+  color: #f8fafc;
+  min-height: 100vh;
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  background: #f8fafc;
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  border: 1px solid #e2e8f0;
-  text-align: left;
+  flex-direction: column;
 }
 
-.filters-bar .filter-item {
-  flex: 1;
-  min-width: 160px;
+/* ----------------------------------------------------------------------------
+   1. PANTALLA DE LOGIN (PIN-PAD & SELECCIÓN)
+   ---------------------------------------------------------------------------- */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
 }
 
-.filters-bar label {
-  font-size: 11px;
+.login-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 30px 24px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.brand-logo h2 {
+  font-size: 20px;
   font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: block;
+  color: #ffffff !important;
   margin-bottom: 4px;
 }
 
-.filters-bar select, 
-.filters-bar input {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+.brand-logo p {
   font-size: 13px;
-  background: #ffffff;
+  color: #94a3b8 !important;
+  margin-bottom: 24px;
 }
 
-/* Corrección de color y contraste en pantalla de Login */
-.login-card label,
-.login-card p,
-.login-card h2 {
-  color: #ffffff !important;
+.form-group {
+  text-align: left;
+  margin-bottom: 18px;
 }
 
-/* Teclado PIN en cuadrícula de 3 columnas */
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0 !important;
+  margin-bottom: 6px;
+}
+
+select, input[type="text"], textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #475569;
+  background-color: #0f172a;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+select:focus, input[type="text"]:focus, textarea:focus {
+  border-color: #38bdf8;
+}
+
+/* Cuadrícula del PIN-pad */
+.pin-display {
+  font-size: 28px;
+  letter-spacing: 10px;
+  text-align: center;
+  margin: 10px 0;
+  color: #38bdf8 !important;
+  font-weight: bold;
+}
+
 .pin-pad {
   display: grid !important;
   grid-template-columns: repeat(3, 1fr) !important;
-  gap: 10px !important;
-  max-width: 260px !important;
+  gap: 12px !important;
+  max-width: 280px !important;
   margin: 15px auto 0 auto !important;
 }
 
 .pin-btn {
-  padding: 14px;
-  font-size: 18px;
+  padding: 16px;
+  font-size: 20px;
   font-weight: 700;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  background-color: #f9fafb;
-  color: #111827;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  background-color: #334155;
+  color: #ffffff;
   cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pin-btn:active {
+  transform: scale(0.95);
+  background-color: #475569;
 }
 
 .pin-btn-clear {
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: #7f1d1d !important;
+  color: #fca5a5 !important;
+  border-color: #991b1b !important;
 }
 
 .pin-btn-enter {
-  background-color: #dcfce7;
-  color: #166534;
+  background-color: #14532d !important;
+  color: #86efac !important;
+  border-color: #166534 !important;
 }
 
-.pin-display {
-  font-size: 24px;
-  letter-spacing: 8px;
+/* ----------------------------------------------------------------------------
+   2. APP PRINCIPAL Y HEADER
+   ---------------------------------------------------------------------------- */
+.app-container {
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 15px;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #1e293b;
+  padding: 14px 20px;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  margin-bottom: 15px;
+}
+
+.header-info {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.hotel-badge {
+  background-color: #0284c7;
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.user-badge {
+  color: #f1f5f9;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.btn-logout {
+  background: transparent;
+  border: 1px solid #475569;
+  color: #94a3b8;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-logout:hover {
+  background-color: #334155;
+  color: #ffffff;
+}
+
+/* Pestañas */
+.app-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.tab-btn {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.tab-btn.active {
+  background-color: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Banners y Controles Express */
+.my-tasks-banner {
+  background-color: #0369a1;
+  color: #ffffff;
+  padding: 12px 16px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.btn-giant {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  background-color: #16a34a;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.btn-giant:hover {
+  background-color: #15803d;
+}
+
+/* ----------------------------------------------------------------------------
+   3. TARJETAS DEL MURO OPERATIVO (FEED DE NOVEDADES)
+   ---------------------------------------------------------------------------- */
+.card-form, .filters-card {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-row input, .filter-row select {
+  flex: 1;
+  min-width: 140px;
+}
+
+.timeline-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.incident-card {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.incident-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.incident-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.incident-meta {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.incident-body {
+  font-size: 14px;
+  color: #e2e8f0;
+  margin-bottom: 12px;
+  white-space: pre-line;
+}
+
+.resolution-box {
+  background-color: #064e3b;
+  border: 1px solid #059669;
+  color: #a7f3d0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.incident-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  border-top: 1px solid #334155;
+  padding-top: 10px;
+}
+
+/* Badges y Etiquetas */
+.badge-role {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.prio-NORMAL { background-color: #0284c7; color: white; }
+.prio-ALTA { background-color: #d97706; color: white; }
+.prio-CRITICA { background-color: #dc2626; color: white; }
+
+.status-PENDIENTE { background-color: #475569; color: white; }
+.status-PROCESO { background-color: #b45309; color: white; }
+.status-RESUELTO { background-color: #15803d; color: white; }
+
+.badge-room-blocked {
+  background-color: #991b1b;
+  color: #fecaca;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-right: 5px;
+}
+
+/* Botones Pequeños de Acción */
+.btn-sm {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-success { background-color: #16a34a; color: white; }
+.btn-warning { background-color: #d97706; color: white; }
+.btn-danger { background-color: #dc2626; color: white; }
+.btn-secondary { background-color: #475569; color: white; }
+.btn-light { background-color: #ffffff; color: #0f172a; }
+.btn-outline-light { background: transparent; border: 1px solid #ffffff; color: #ffffff; }
+
+/* ----------------------------------------------------------------------------
+   4. MENSAJES Y MODALES
+   ---------------------------------------------------------------------------- */
+.msg-box {
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
   text-align: center;
   margin-top: 10px;
-  color: #ffffff;
+}
+
+.msg-error { background-color: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b; }
+.msg-success { background-color: #14532d; color: #86efac; border: 1px solid #166534; }
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.modal-card {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 450px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 15px;
 }
