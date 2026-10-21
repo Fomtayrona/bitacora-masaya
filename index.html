@@ -10,7 +10,7 @@
     body { background-color: #1a252f; color: #333; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
     
     .card { background: white; width: 100%; max-width: 480px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; }
-    .card.wide { max-width: 750px; text-align: left; }
+    .card.wide { max-width: 800px; text-align: left; }
     
     h1 { color: #1a252f; font-size: 22px; margin-bottom: 6px; font-weight: 700; text-align: center; }
     p.subtitle { color: #666; font-size: 13px; margin-bottom: 20px; text-align: center; }
@@ -43,6 +43,7 @@
     .badge-role { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
     .badge-admin { background: #fef3c7; color: #92400e; }
     .badge-op { background: #e0e7ff; color: #3730a3; }
+    .badge-hotel { background: #f1f5f9; color: #334155; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block; }
     .btn-sm { padding: 4px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; }
     .btn-danger { background: #fee2e2; color: #991b1b; }
   </style>
@@ -112,7 +113,7 @@
         <form onsubmit="createUser(event)">
           <div class="grid-form">
             <div class="form-group">
-              <label>Hotel</label>
+              <label>Hotel / Sede</label>
               <select id="new-user-hotel" required></select>
             </div>
             <div class="form-group">
@@ -147,6 +148,7 @@
           <thead>
             <tr>
               <th>Nombre</th>
+              <th>Sede / Hotel</th>
               <th>Rol</th>
               <th>PIN</th>
               <th>Acciones</th>
@@ -178,236 +180,12 @@
     let allUsers = [];
     let allHotels = [];
 
-    // Función auxiliar para forzar un límite de tiempo en peticiones
     function fetchWithTimeout(promise, ms = 4000) {
       return Promise.race([
         promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Tiempo de espera agotado al conectar")), ms))
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Tiempo de espera agotado")), ms))
       ]);
     }
 
     async function initApp() {
-      const hotelSelect = document.getElementById('hotel-select');
-      try {
-        if (!window.supabase) throw new Error("Librería de Supabase no cargada correctamente.");
-        
-        _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        // Intentar obtener hoteles con tiempo límite de 4s
-        const response = await fetchWithTimeout(_supabase.from('hotels').select('*'), 4000);
-        
-        if (response.error) throw response.error;
-        allHotels = response.data || [];
-
-        const newUserHotel = document.getElementById('new-user-hotel');
-
-        if (allHotels.length === 0) {
-          hotelSelect.innerHTML = '<option value="">No hay hoteles registrados</option>';
-          return;
-        }
-
-        const optionsHtml = '<option value="">-- Seleccionar --</option>' + 
-          allHotels.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
-
-        hotelSelect.innerHTML = optionsHtml;
-        newUserHotel.innerHTML = optionsHtml;
-
-        refreshUsers();
-
-      } catch (err) {
-        showError("⚠️ " + err.message);
-        hotelSelect.innerHTML = '<option value="">Error de conexión</option>';
-      }
-    }
-
-    async function refreshUsers() {
-      try {
-        const response = await fetchWithTimeout(_supabase.from('users').select('*'), 4000);
-        if (!response.error) {
-          allUsers = response.data || [];
-        }
-      } catch (e) {
-        console.warn("No se pudieron pre-cargar los usuarios:", e.message);
-      }
-    }
-
-    function loadUsers() {
-      const hotelId = document.getElementById('hotel-select').value;
-      const userSelect = document.getElementById('user-select');
-      
-      if (!hotelId) {
-        userSelect.innerHTML = '<option value="">Primero selecciona hotel</option>';
-        userSelect.disabled = true;
-        return;
-      }
-
-      const filteredUsers = allUsers.filter(u => u.hotel_id === hotelId && u.is_active !== false);
-      if (filteredUsers.length === 0) {
-        userSelect.innerHTML = '<option value="">Sin usuarios en esta sede</option>';
-        userSelect.disabled = true;
-        return;
-      }
-
-      userSelect.innerHTML = '<option value="">-- Seleccionar Usuario --</option>' +
-        filteredUsers.map(u => `<option value="${u.id}">${u.display_name || u.full_name}</option>`).join('');
-      
-      userSelect.disabled = false;
-      userSelect.onchange = selectUser;
-    }
-
-    function selectUser() {
-      const userId = document.getElementById('user-select').value;
-      if (!userId) return;
-
-      selectedUser = allUsers.find(u => u.id === userId);
-      document.getElementById('selected-user-name').innerText = `👤 ${selectedUser.display_name || selectedUser.full_name}`;
-      
-      document.getElementById('step-select').style.display = 'none';
-      document.getElementById('step-pin').style.display = 'block';
-      clearPin();
-    }
-
-    function pressKey(num) {
-      if (currentPin.length < 4) {
-        currentPin += num;
-        updatePinDots();
-        if (currentPin.length === 4) validatePin();
-      }
-    }
-
-    function deleteLastPin() {
-      currentPin = currentPin.slice(0, -1);
-      updatePinDots();
-    }
-
-    function clearPin() {
-      currentPin = "";
-      updatePinDots();
-      hideMsgs();
-    }
-
-    function updatePinDots() {
-      for (let i = 0; i < 4; i++) {
-        const dot = document.getElementById(`dot-${i}`);
-        if (i < currentPin.length) dot.classList.add('filled');
-        else dot.classList.remove('filled');
-      }
-    }
-
-    function validatePin() {
-      if (currentPin === selectedUser.pin) {
-        openSession();
-      } else {
-        showError("❌ PIN Incorrecto");
-        setTimeout(() => clearPin(), 800);
-      }
-    }
-
-    function openSession() {
-      document.getElementById('step-pin').style.display = 'none';
-      document.getElementById('step-session').style.display = 'block';
-      document.getElementById('main-card').classList.add('wide');
-
-      document.getElementById('session-user').innerText = selectedUser.display_name || selectedUser.full_name;
-      const roleBadge = document.getElementById('session-role');
-      roleBadge.innerText = selectedUser.role;
-      roleBadge.className = `badge-role ${selectedUser.role === 'ADMIN' ? 'badge-admin' : 'badge-op'}`;
-
-      if (selectedUser.role === 'ADMIN') {
-        document.getElementById('admin-panel').style.display = 'block';
-        document.getElementById('operator-panel').style.display = 'none';
-        renderUsersTable();
-      } else {
-        document.getElementById('admin-panel').style.display = 'none';
-        document.getElementById('operator-panel').style.display = 'block';
-      }
-    }
-
-    async function createUser(e) {
-      e.preventDefault();
-      hideMsgs();
-
-      const newUser = {
-        hotel_id: document.getElementById('new-user-hotel').value,
-        full_name: document.getElementById('new-user-fullname').value,
-        display_name: document.getElementById('new-user-display').value,
-        email: document.getElementById('new-user-email').value,
-        role: document.getElementById('new-user-role').value,
-        pin: document.getElementById('new-user-pin').value,
-        pin_hash: document.getElementById('new-user-pin').value,
-        pin_salt: 'default_salt',
-        area: 'GENERAL',
-        is_active: true
-      };
-
-      const { error } = await _supabase.from('users').insert([newUser]);
-
-      if (error) {
-        showError("Error al guardar: " + error.message);
-      } else {
-        showSuccess("¡Usuario creado exitosamente!");
-        e.target.reset();
-        await refreshUsers();
-        renderUsersTable();
-      }
-    }
-
-    function renderUsersTable() {
-      const tbody = document.getElementById('users-table-body');
-      tbody.innerHTML = allUsers.map(u => `
-        <tr>
-          <td><b>${u.display_name || u.full_name}</b><br><small style="color:#666">${u.email || ''}</small></td>
-          <td><span class="badge-role ${u.role === 'ADMIN' ? 'badge-admin' : 'badge-op'}">${u.role}</span></td>
-          <td><code>${u.pin || '****'}</code></td>
-          <td>
-            <button onclick="toggleUserStatus('${u.id}', ${u.is_active !== false})" class="btn-sm btn-danger">
-              ${u.is_active !== false ? 'Desactivar' : 'Activar'}
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    async function toggleUserStatus(userId, currentActive) {
-      const { error } = await _supabase.from('users').update({ is_active: !currentActive }).eq('id', userId);
-      if (!error) {
-        await refreshUsers();
-        renderUsersTable();
-      }
-    }
-
-    function resetFlow() {
-      currentPin = "";
-      selectedUser = null;
-      document.getElementById('main-card').classList.remove('wide');
-      document.getElementById('hotel-select').value = "";
-      document.getElementById('user-select').value = "";
-      document.getElementById('user-select').disabled = true;
-      document.getElementById('step-pin').style.display = 'none';
-      document.getElementById('step-session').style.display = 'none';
-      document.getElementById('step-select').style.display = 'block';
-      hideMsgs();
-    }
-
-    function showError(msg) {
-      const errDiv = document.getElementById('error-msg');
-      errDiv.innerText = msg;
-      errDiv.style.display = 'block';
-    }
-
-    function showSuccess(msg) {
-      const succDiv = document.getElementById('success-msg');
-      succDiv.innerText = msg;
-      succDiv.style.display = 'block';
-      setTimeout(() => succDiv.style.display = 'none', 3000);
-    }
-
-    function hideMsgs() {
-      document.getElementById('error-msg').style.display = 'none';
-      document.getElementById('success-msg').style.display = 'none';
-    }
-
-    initApp();
-  </script>
-</body>
-</html>
+      const hotelSelect = document.
