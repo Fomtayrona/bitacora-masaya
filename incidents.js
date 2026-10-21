@@ -257,11 +257,15 @@ function renderIncidentsList(incidentsToRender) {
           </div>
         ` : ''}
         
-        <div class="incident-actions">
+<div class="incident-actions">
           <span style="font-weight:600; color:#666;">Cambiar Estado:</span>
           <button onclick="updateIncidentStatus('${inc.id}', 'PENDIENTE')" class="btn-sm btn-danger">Pendiente</button>
           <button onclick="updateIncidentStatus('${inc.id}', 'PROCESO')" class="btn-sm btn-warning">En Proceso</button>
           <button onclick="openResolveModal('${inc.id}')" class="btn-sm btn-success">✓ Resolver con Comentario</button>
+          
+          ${selectedUser && (selectedUser.role === 'ADMIN' || selectedUser.role === 'ADMINISTRADOR') ? `
+            <button onclick="deleteIncident('${inc.id}', '${inc.title.replace(/'/g, "\\'")}')" class="btn-sm btn-danger" style="margin-left: auto; background: #991b1b; color: white;">🗑️ Eliminar (Admin)</button>
+          ` : ''}
         </div>
       </div>
     `;
@@ -474,4 +478,34 @@ async function deleteCategory(catId, catName) {
   } else {
     showError("Error al eliminar categoría: " + error.message);
   }
+  /**
+ * Elimina una novedad de forma permanente de la base de datos (Exclusivo para ADMINISTRADOR).
+ */
+async function deleteIncident(incId, title) {
+  if (!selectedUser || (selectedUser.role !== 'ADMIN' && selectedUser.role !== 'ADMINISTRADOR')) {
+    alert("No tienes permisos suficientes para realizar esta acción.");
+    return;
+  }
+
+  const confirmDelete = confirm(`⚠️ ¿ESTÁS SEGURO?\n\nEsta acción eliminará de forma permanente la novedad:\n"${title}"\n\nEsta operación no se puede deshacer.`);
+  
+  if (!confirmDelete) return;
+
+  hideMsgs();
+  
+  try {
+    const { error } = await _supabase
+      .from('incidents')
+      .delete()
+      .eq('id', incId);
+
+    if (error) throw error;
+
+    showSuccess("Novedad eliminada permanentemente de la base de datos.");
+    await loadIncidents();
+
+  } catch (err) {
+    showError("Error al eliminar la novedad: " + err.message);
+  }
+}
 }
