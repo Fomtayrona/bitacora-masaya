@@ -147,7 +147,11 @@ async function submitPin() {
     return;
   }
 
-if (selectedUser.pin_code !== enteredPin) {
+// Convierte ambos valores a String y elimina espacios invisibles
+  const dbPin = String(selectedUser.pin_code || '').trim();
+  const inputPin = String(enteredPin || '').trim();
+
+  if (dbPin !== inputPin) {
     showLoginError("PIN incorrecto. Intenta de nuevo.");
     clearPin();
     return;
