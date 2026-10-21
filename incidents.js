@@ -141,7 +141,7 @@ function updateMyTasksBanner() {
 function filterMyTasks() {
   if (!selectedUser) return;
 
-  // 1. Limpiar o resetear los filtros principales
+  // 1. Limpiar o resetear los controles de selección en la UI
   const statusSelect = document.getElementById('filter-status');
   const areaSelect = document.getElementById('filter-area');
   const prioritySelect = document.getElementById('filter-priority');
@@ -152,10 +152,14 @@ function filterMyTasks() {
   if (prioritySelect) prioritySelect.value = 'TODAS';
   if (searchInput) searchInput.value = '';
 
-  // 2. Filtrar el array en memoria por el ID del usuario en sesión
-  const myTasks = currentIncidents.filter(inc => inc.assigned_to_user_id === selectedUser.id);
+  // 2. Filtrar el listado completo cargado en memoria por el ID del usuario en sesión
+  const myTasks = currentIncidents.filter(inc => {
+    // Valida si la tarea está asignada directamente al ID del usuario o a su objeto asignado
+    const assignedId = inc.assigned_to_user_id || (inc.assigned ? inc.assigned.id : null);
+    return assignedId === selectedUser.id;
+  });
 
-  // 3. Renderizar directamente la lista con sus tareas
+  // 3. Renderizar el resultado de mis tareas
   renderIncidentsList(myTasks);
 }
 
