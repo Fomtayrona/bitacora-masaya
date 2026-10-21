@@ -1,28 +1,243 @@
-<!-- BARRA DE FILTROS PARA NOVEDADES -->
-<div class="filters-bar">
-  <div class="filter-item">
-    <label>Filtrar Estado</label>
-    <select id="filter-status" onchange="filterIncidents()">
-      <option value="TODOS">Todos los estados</option>
-      <option value="PENDIENTE">Pendiente</option>
-      <option value="PROCESO">En Proceso</option>
-      <option value="RESUELTO">Resuelto</option>
-    </select>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitácora Masaya - Control Operacional</title>
+  <!-- SDK Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Estilos del Sistema (v1.1 para romper caché) -->
+  <link rel="stylesheet" href="styles.css?v=1.1">
+</head>
+<body>
+
+  <div id="main-card" class="card">
+    <h1>Bitácora Masaya</h1>
+    <p class="subtitle">Control Operacional Recepción</p>
+
+    <!-- PASO 1: Selección de Hotel y Usuario -->
+    <div id="step-select">
+      <div class="form-group">
+        <label>1. Selecciona Hotel</label>
+        <select id="hotel-select" onchange="loadUsersForHotel()"><option value="">Cargando hoteles...</option></select>
+      </div>
+
+      <div class="form-group">
+        <label>2. Selecciona tu Usuario</label>
+        <select id="user-select" disabled><option value="">Primero selecciona hotel</option></select>
+      </div>
+    </div>
+
+    <!-- PASO 2: Teclado PIN -->
+    <div id="step-pin" style="display: none;">
+      <div id="selected-user-name" class="user-badge"></div>
+      <p style="font-size: 13px; color: #666;">Ingresa tu PIN de 4 dígitos:</p>
+      
+      <div class="pin-display">
+        <div class="pin-dot" id="dot-0"></div>
+        <div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div>
+        <div class="pin-dot" id="dot-3"></div>
+      </div>
+
+      <div class="keypad">
+        <button class="key" onclick="pressKey('1')">1</button>
+        <button class="key" onclick="pressKey('2')">2</button>
+        <button class="key" onclick="pressKey('3')">3</button>
+        <button class="key" onclick="pressKey('4')">4</button>
+        <button class="key" onclick="pressKey('5')">5</button>
+        <button class="key" onclick="pressKey('6')">6</button>
+        <button class="key" onclick="pressKey('7')">7</button>
+        <button class="key" onclick="pressKey('8')">8</button>
+        <button class="key" onclick="pressKey('9')">9</button>
+        <button class="key action" onclick="clearPin()">C</button>
+        <button class="key" onclick="pressKey('0')">0</button>
+        <button class="key action" onclick="deleteLastPin()">⌫</button>
+      </div>
+
+      <button class="btn-back" onclick="resetFlow()">← Cambiar de usuario</button>
+    </div>
+
+    <!-- PASO 3: Sesión / Panel Principal -->
+    <div id="step-session" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+        <div>
+          <span id="session-user" style="font-weight: 700; color: #1a252f;"></span>
+          <span id="session-role" class="badge-role badge-op" style="margin-left: 6px;"></span>
+          <span id="session-hotel-name" class="badge-hotel" style="margin-left: 6px;"></span>
+        </div>
+        <button onclick="resetFlow()" class="btn-sm btn-danger">Cerrar Sesión</button>
+      </div>
+
+      <!-- PESTAÑAS NAVEGACIÓN ADMIN -->
+      <div id="admin-nav" class="nav-tabs" style="display: none;">
+        <button class="tab-btn active" onclick="switchAdminTab('incidents')">📋 Novedades de Turno</button>
+        <button class="tab-btn" onclick="switchAdminTab('users')">👥 Colaboradores</button>
+        <button class="tab-btn" onclick="switchAdminTab('categories')">🏷️ Categorías</button>
+      </div>
+
+      <!-- SECCIÓN NOVEDADES DE TURNO -->
+      <div id="incidents-section">
+        <h3 style="font-size: 16px; margin-bottom: 12px; color: #1a252f;">📝 Registrar Novedad de Turno</h3>
+        <form onsubmit="createIncident(event)">
+          <div class="grid-form">
+            <div class="form-group">
+              <label>Categoría</label>
+              <select id="inc-category" required></select>
+            </div>
+            <div class="form-group">
+              <label>Prioridad</label>
+              <select id="inc-priority">
+                <option value="BAJA">Baja</option>
+                <option value="MEDIA" selected>Media</option>
+                <option value="ALTA">Alta</option>
+                <option value="CRITICA">🚨 Crítica</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label>Asunto / Título Resumen</label>
+              <input type="text" id="inc-title" placeholder="Ej: Fuga de agua en habitación 204" required />
+            </div>
+            <div class="form-group full-width">
+              <label>Detalle de la Novedad</label>
+              <textarea id="inc-description" placeholder="Escribe observaciones, acciones tomadas o seguimiento necesario..." required></textarea>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary">Publicar Novedad</button>
+        </form>
+
+        <h3 style="font-size: 16px; margin: 25px 0 12px 0; color: #1a252f;">📋 Historial de Novedades de Turno</h3>
+        
+        <!-- BARRA DE FILTROS PARA NOVEDADES -->
+        <div class="filters-bar">
+          <div class="filter-item">
+            <label>Filtrar Estado</label>
+            <select id="filter-status" onchange="filterIncidents()">
+              <option value="TODOS">Todos los estados</option>
+              <option value="PENDIENTE">Pendiente</option>
+              <option value="PROCESO">En Proceso</option>
+              <option value="RESUELTO">Resuelto</option>
+            </select>
+          </div>
+
+          <div class="filter-item">
+            <label>Filtrar Prioridad</label>
+            <select id="filter-priority" onchange="filterIncidents()">
+              <option value="TODAS">Todas las prioridades</option>
+              <option value="BAJA">Baja</option>
+              <option value="MEDIA">Media</option>
+              <option value="ALTA">Alta</option>
+              <option value="CRITICA">🚨 Crítica</option>
+            </select>
+          </div>
+
+          <div class="filter-item">
+            <label>Buscar Texto</label>
+            <input type="text" id="filter-search" placeholder="Buscar título o detalle..." oninput="filterIncidents()" />
+          </div>
+        </div>
+
+        <div id="incidents-timeline">Cargando novedades...</div>
+      </div>
+
+      <!-- SECCIÓN GESTIÓN COLABORADORES (ADMIN) -->
+      <div id="tab-users" style="display: none;">
+        <h3 style="font-size: 15px; margin-bottom: 12px; color: #1a252f;">➕ Crear Nuevo Usuario</h3>
+        <form onsubmit="createUser(event)">
+          <div class="grid-form">
+            <div class="form-group full-width">
+              <label>Sedes / Hoteles Asignados</label>
+              <div id="hotels-checkboxes" class="checkbox-group"></div>
+            </div>
+            <div class="form-group">
+              <label>Nombre Completo</label>
+              <input type="text" id="new-user-fullname" placeholder="Ej: Maria Perez" required />
+            </div>
+            <div class="form-group">
+              <label>Nombre Display</label>
+              <input type="text" id="new-user-display" placeholder="Ej: Maria P." required />
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="new-user-email" placeholder="maria@masaya.com" required />
+            </div>
+            <div class="form-group">
+              <label>Rol</label>
+              <select id="new-user-role">
+                <option value="OPERATIVO">OPERATIVO</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label>PIN (4 dígitos)</label>
+              <input type="password" id="new-user-pin" maxlength="4" pattern="\d{4}" placeholder="1234" required />
+            </div>
+          </div>
+          <button type="submit" class="btn-primary">Guardar Usuario</button>
+        </form>
+
+        <h3 style="font-size: 15px; margin: 20px 0 10px 0; color: #1a252f;">👥 Colaboradores Registrados</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Sedes Autorizadas</th>
+              <th>Rol</th>
+              <th>PIN</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body"></tbody>
+        </table>
+      </div>
+
+      <!-- SECCIÓN GESTIÓN CATEGORÍAS (ADMIN) -->
+      <div id="tab-categories" style="display: none;">
+        <h3 style="font-size: 15px; margin-bottom: 12px; color: #1a252f;">➕ Agregar Nueva Categoría</h3>
+        <form onsubmit="createCategory(event)" style="display: flex; gap: 10px; margin-bottom: 20px;">
+          <input type="text" id="new-category-name" placeholder="Ej: Mantenimiento Preventivo" required style="flex:1;" />
+          <button type="submit" class="btn-primary" style="margin:0; width: auto; padding: 0 20px;">Agregar</button>
+        </form>
+
+        <h3 style="font-size: 15px; margin-bottom: 10px; color: #1a252f;">Listado de Categorías</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre Categoría</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="categories-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- NOTIFICACIONES Y MENSAJES -->
+    <div id="error-msg" class="error-msg"></div>
+    <div id="success-msg" class="success-msg"></div>
   </div>
 
-  <div class="filter-item">
-    <label>Filtrar Prioridad</label>
-    <select id="filter-priority" onchange="filterIncidents()">
-      <option value="TODAS">Todas las prioridades</option>
-      <option value="BAJA">Baja</option>
-      <option value="MEDIA">Media</option>
-      <option value="ALTA">Alta</option>
-      <option value="CRITICA">🚨 Crítica</option>
-    </select>
+  <!-- MODAL EDITAR SEDES -->
+  <div id="edit-modal" class="modal">
+    <div class="modal-content">
+      <h3 style="font-size: 16px; margin-bottom: 10px; color: #1a252f;">🏨 Modificar Sedes de Colaborador</h3>
+      <p id="edit-user-name" style="font-size: 13px; color: #666; margin-bottom: 15px; font-weight: 600;"></p>
+      
+      <div class="form-group">
+        <label>Selecciona las sedes asignadas:</label>
+        <div id="edit-hotels-checkboxes" class="checkbox-group"></div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <button onclick="saveUserHotels()" class="btn-primary" style="margin: 0;">Guardar Cambios</button>
+        <button onclick="closeEditModal()" class="btn-sm btn-danger" style="padding: 10px 15px; font-size: 13px;">Cancelar</button>
+      </div>
+    </div>
   </div>
 
-  <div class="filter-item">
-    <label>Buscar Texto</label>
-    <input type="text" id="filter-search" placeholder="Buscar título o detalle..." oninput="filterIncidents()" />
-  </div>
-</div>
+  <!-- Carga de Módulos JavaScript -->
+  <script src="app.js"></script>
+  <script src="incidents.js"></script>
+</body>
+</html>
