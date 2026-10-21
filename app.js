@@ -60,10 +60,11 @@ async function onHotelChange() {
   if (!selectedHotelId) return;
 
   try {
-    const { data: userHotels, error: uhError } = await _supabase
-      .from('user_hotels')
-      .select('user_id')
-      .eq('hotel_id', selectedHotelId);
+const { data: users, error: uError } = await _supabase
+  .from('users')
+  .select('*')
+  .in('id', userIds)
+  .order('full_name');
 
     if (uhError) throw uhError;
     const userIds = (userHotels || []).map(uh => uh.user_id);
