@@ -8,30 +8,22 @@
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; }
     body { background-color: #1a252f; color: #333; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    
     .card { background: white; width: 100%; max-width: 400px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; }
     h1 { color: #1a252f; font-size: 22px; margin-bottom: 6px; font-weight: 700; }
     p.subtitle { color: #666; font-size: 13px; margin-bottom: 20px; }
-
-    /* Selección de Hotel y Usuario */
     .form-group { text-align: left; margin-bottom: 15px; }
     label { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
     select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; outline: none; background: #fff; cursor: pointer; }
     select:focus { border-color: #007bff; }
-
-    /* Pantalla PIN */
     .pin-display { display: flex; justify-content: center; gap: 12px; margin: 20px 0; }
     .pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #ccc; transition: all 0.2s; }
     .pin-dot.filled { background-color: #1a252f; border-color: #1a252f; }
-
-    /* Teclado Numérico */
     .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 15px; }
-    .key { background: #f4f6f8; border: none; padding: 18px 0; font-size: 20px; font-weight: 600; border-radius: 10px; cursor: pointer; color: #1a252f; transition: background 0.1s; }
+    .key { background: #f4f6f8; border: none; padding: 18px 0; font-size: 20px; font-weight: 600; border-radius: 10px; cursor: pointer; color: #1a252f; }
     .key:active { background: #e2e8f0; }
     .key.action { font-size: 14px; background: #fee2e2; color: #991b1b; }
-
     .user-badge { background: #e0f2fe; color: #0369a1; padding: 8px 12px; border-radius: 6px; font-weight: 600; font-size: 14px; margin-bottom: 15px; display: inline-block; }
-    .error-msg { color: #dc2626; font-size: 13px; margin-top: 10px; min-height: 18px; font-weight: 500; }
+    .error-msg { color: #dc2626; font-size: 13px; margin-top: 15px; min-height: 18px; font-weight: 500; background: #fef2f2; padding: 8px; border-radius: 6px; display: none; }
     .btn-back { background: none; border: none; color: #64748b; font-size: 13px; cursor: pointer; margin-top: 15px; text-decoration: underline; }
   </style>
 </head>
@@ -98,22 +90,36 @@
   <script>
     const SUPABASE_URL = 'https://tsxecbjacdblbxprobdi.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_awz6uY_HmS1o3mf7Pgh55A_kAjbGfRQ';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let _supabase;
 
     let currentPin = "";
     let selectedUser = null;
     let allUsers = [];
 
     async function initApp() {
-      const { data: hotels, error } = await _supabase.from('hotels').select('*');
-      if (error) { showError("Error al cargar hoteles."); return; }
+      try {
+        _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      const hotelSelect = document.getElementById('hotel-select');
-      hotelSelect.innerHTML = '<option value="">-- Seleccionar --</option>' + 
-        hotels.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
+        const { data: hotels, error } = await _supabase.from('hotels').select('*');
+        if (error) throw error;
 
-      const { data: users, error: userError } = await _supabase.from('users').select('*');
-      if (!userError) allUsers = users;
+        const hotelSelect = document.getElementById('hotel-select');
+        if (!hotels || hotels.length === 0) {
+          hotelSelect.innerHTML = '<option value="">No hay hoteles disponibles</option>';
+          return;
+        }
+
+        hotelSelect.innerHTML = '<option value="">-- Seleccionar --</option>' + 
+          hotels.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
+
+        const { data: users, error: userError } = await _supabase.from('users').select('*');
+        if (userError) throw userError;
+        allUsers = users || [];
+
+      } catch (err) {
+        showError("Error de carga: " + err.message);
+        document.getElementById('hotel-select').innerHTML = '<option value="">Error al cargar</option>';
+      }
     }
 
     function loadUsers() {
@@ -168,7 +174,7 @@
     function clearPin() {
       currentPin = "";
       updatePinDots();
-      showError("");
+      hideError();
     }
 
     function updatePinDots() {
@@ -197,4 +203,23 @@
       document.getElementById('user-select').value = "";
       document.getElementById('user-select').disabled = true;
       document.getElementById('step-pin').style.display = 'none';
-      document.getElementById('step-success
+      document.getElementById('step-success').style.display = 'none';
+      document.getElementById('step-select').style.display = 'block';
+      hideError();
+    }
+
+    function showError(msg) {
+      const errDiv = document.getElementById('error-msg');
+      errDiv.innerText = msg;
+      errDiv.style.display = 'block';
+    }
+
+    function hideError() {
+      const errDiv = document.getElementById('error-msg');
+      errDiv.style.display = 'none';
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
