@@ -28,11 +28,11 @@ async function initLogin() {
   hideMsgs();
   
   try {
-    const { data: hotels, error: hError } = await _supabase
-      .from('hotels')
-      .select('*')
-      .eq('is_active', true)
-      .order('name');
+const { data: hotels, error: hError } = await _supabase
+  .from('hotels')
+  .select('*')
+  .eq('is_active', true)
+  .order('name');
 
     if (hError) throw hError;
     allHotels = hotels || [];
