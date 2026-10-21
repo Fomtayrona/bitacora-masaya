@@ -147,7 +147,7 @@ async function submitPin() {
     return;
   }
 
-  if (selectedUser.pin_code !== enteredPin) {
+if (selectedUser.pin_code !== enteredPin) {
     showLoginError("PIN incorrecto. Intenta de nuevo.");
     clearPin();
     return;
