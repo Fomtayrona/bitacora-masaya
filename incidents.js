@@ -135,14 +135,28 @@ function updateMyTasksBanner() {
   }
 }
 
+/**
+ * Filtra el listado mostrando únicamente las tareas asignadas directamente al usuario en sesión.
+ */
 function filterMyTasks() {
+  if (!selectedUser) return;
+
+  // 1. Limpiar o resetear los filtros principales
+  const statusSelect = document.getElementById('filter-status');
+  const areaSelect = document.getElementById('filter-area');
+  const prioritySelect = document.getElementById('filter-priority');
   const searchInput = document.getElementById('filter-search');
-  if (searchInput && selectedUser) {
-    const userName = selectedUser.display_name || selectedUser.full_name;
-    searchInput.value = userName;
-    document.getElementById('filter-status').value = 'TODOS';
-    filterIncidents();
-  }
+
+  if (statusSelect) statusSelect.value = 'TODOS';
+  if (areaSelect) areaSelect.value = 'TODAS';
+  if (prioritySelect) prioritySelect.value = 'TODAS';
+  if (searchInput) searchInput.value = '';
+
+  // 2. Filtrar el array en memoria por el ID del usuario en sesión
+  const myTasks = currentIncidents.filter(inc => inc.assigned_to_user_id === selectedUser.id);
+
+  // 3. Renderizar directamente la lista con sus tareas
+  renderIncidentsList(myTasks);
 }
 
 /**
