@@ -177,7 +177,8 @@ function clearTaskFilters() {
   if (prioritySelect) prioritySelect.value = 'TODAS';
   if (searchInput) searchInput.value = '';
 
-  filterIncidents();
+  // Renderiza directamente la totalidad de novedades cargadas en memoria
+  renderIncidentsList(currentIncidents);
 }
 
 /**
