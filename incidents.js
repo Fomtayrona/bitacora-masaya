@@ -212,7 +212,7 @@ function filterIncidents() {
 }
 
 /**
- * Renderiza el muro de novedades con etiquetas de área, asignados, comentarios de cierre y opción de borrado Admin.
+ * Renderiza el muro de novedades con etiquetas de área, asignados, comentarios de cierre y opción de borrado Admin limpia.
  */
 function renderIncidentsList(incidentsToRender) {
   const container = document.getElementById('incidents-timeline');
@@ -266,7 +266,7 @@ function renderIncidentsList(incidentsToRender) {
           <button onclick="openResolveModal('${inc.id}')" class="btn-sm btn-success">✓ Resolver con Comentario</button>
           
           ${isAdmin ? `
-            <button onclick="deleteIncident('${inc.id}', '${inc.title.replace(/'/g, "\\'")}')" class="btn-sm btn-danger" style="margin-left: auto; background: #991b1b; color: white;">🗑️ Eliminar (Admin)</button>
+            <button onclick="deleteIncident('${inc.id}')" class="btn-sm btn-danger" style="margin-left: auto; background: #991b1b; color: white;">🗑️ Eliminar (Admin)</button>
           ` : ''}
         </div>
       </div>
@@ -378,13 +378,16 @@ async function confirmResolveIncident() {
 /**
  * Elimina una novedad de forma permanente de la base de datos (Exclusivo para ADMINISTRADOR).
  */
-async function deleteIncident(incId, title) {
+async function deleteIncident(incId) {
   const isAdmin = selectedUser && selectedUser.role && selectedUser.role.toUpperCase().includes('ADMIN');
   
   if (!isAdmin) {
     alert("No tienes permisos suficientes para realizar esta acción.");
     return;
   }
+
+  const incident = currentIncidents.find(i => i.id === incId);
+  const title = incident ? incident.title : 'esta novedad';
 
   const confirmDelete = confirm(`⚠️ ¿ESTÁS SEGURO?\n\nEsta acción eliminará de forma permanente la novedad:\n"${title}"\n\nEsta operación no se puede deshacer.`);
   
@@ -398,22 +401,18 @@ async function deleteIncident(incId, title) {
       .delete()
       .eq('id', incId);
 
-    if (error) {
-      console.error("Error Supabase DELETE:", error);
-      alert("Error de Supabase al borrar: " + error.message);
-      showError("Error al eliminar la novedad: " + error.message);
-      return;
-    }
+    if (error) throw error;
 
     showSuccess("¡Novedad eliminada permanentemente!");
     await loadIncidents();
 
   } catch (err) {
-    console.error("Error JS DELETE:", err);
-    alert("Error de ejecución: " + err.message);
+    console.error("Error al eliminar novedad:", err);
+    alert("Error al eliminar la novedad: " + err.message);
     showError("Error al eliminar la novedad: " + err.message);
   }
 }
+
 /* Funciones CRUD de Categorías */
 async function createCategory(e) {
   e.preventDefault();
