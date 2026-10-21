@@ -524,7 +524,7 @@
                 <span class="badge-role prio-${inc.priority}">${inc.priority}</span>
               </div>
               <div class="incident-meta">
-                🏷️ <b>${inc.category}</b> | 👤 <b>${author}</b> \vert{} 🕒 ${dateStr}
+                🏷️ <b>${inc.category}</b> | 👤 <b>${author}</b> | 🕒 ${dateStr}
               </div>
               <div class="incident-body">${inc.description}</div>
             </div>
@@ -677,4 +677,109 @@
           <td><code>${u.pin || '****'}</code></td>
           <td>
             <button onclick="openEditModal('${u.id}')" class="btn-sm btn-edit">Sedes</button>
-            <button onclick="toggleUserStatus('${u.id}',${u.is_active !== false})" class="btn-sm
+            <button onclick="toggleUserStatus('${u.id}', ${u.is_active !== false})" class="btn-sm btn-danger">
+              ${u.is_active !== false ? 'Desactivar' : 'Activar'}
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openEditModal(userId) {
+      editingUserId = userId;
+      const user = allUsers.find(u => u.id === userId);
+      document.getElementById('edit-user-name').innerText = user.full_name + " (" + user.email + ")";
+
+      const currentHotelIds = allUserHotels
+        .filter(uh => uh.user_id === userId)
+        .map(uh => uh.hotel_id);
+
+      const container = document.getElementById('edit-hotels-checkboxes');
+      container.innerHTML = allHotels.map(h => `
+        <label class="checkbox-item">
+          <input type="checkbox" name="edit-user-hotels" value="${h.id}" ${currentHotelIds.includes(h.id) ? 'checked' : ''}>
+          ${h.name}
+        </label>
+      `).join('');
+
+      document.getElementById('edit-modal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-modal').style.display = 'none';
+      editingUserId = null;
+    }
+
+    async function saveUserHotels() {
+      if (!editingUserId) return;
+
+      const selectedHotels = Array.from(document.querySelectorAll('input[name="edit-user-hotels"]:checked')).map(cb => cb.value);
+
+      if (selectedHotels.length === 0) {
+        alert("El colaborador debe tener al menos una sede asignada.");
+        return;
+      }
+
+      await _supabase.from('user_hotels').delete().eq('user_id', editingUserId);
+
+      const rows = selectedHotels.map(hId => ({
+        user_id: editingUserId,
+        hotel_id: hId
+      }));
+
+      const { error } = await _supabase.from('user_hotels').insert(rows);
+
+      if (!error) {
+        closeEditModal();
+        await refreshData();
+        renderUsersTable();
+        showSuccess("¡Sedes del usuario actualizadas exitosamente!");
+      } else {
+        alert("Error al actualizar sedes: " + error.message);
+      }
+    }
+
+    async function toggleUserStatus(userId, currentActive) {
+      const { error } = await _supabase.from('users').update({ is_active: !currentActive }).eq('id', userId);
+      if (!error) {
+        await refreshData();
+        renderUsersTable();
+      }
+    }
+
+    function resetFlow() {
+      currentPin = "";
+      selectedUser = null;
+      selectedHotelId = null;
+      document.getElementById('main-card').classList.remove('wide');
+      document.getElementById('hotel-select').value = "";
+      document.getElementById('user-select').value = "";
+      document.getElementById('user-select').disabled = true;
+      document.getElementById('step-pin').style.display = 'none';
+      document.getElementById('step-session').style.display = 'none';
+      document.getElementById('step-select').style.display = 'block';
+      hideMsgs();
+    }
+
+    function showError(msg) {
+      const errDiv = document.getElementById('error-msg');
+      errDiv.innerHTML = msg;
+      errDiv.style.display = 'block';
+    }
+
+    function showSuccess(msg) {
+      const succDiv = document.getElementById('success-msg');
+      succDiv.innerText = msg;
+      succDiv.style.display = 'block';
+      setTimeout(() => succDiv.style.display = 'none', 3000);
+    }
+
+    function hideMsgs() {
+      document.getElementById('error-msg').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'none';
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
