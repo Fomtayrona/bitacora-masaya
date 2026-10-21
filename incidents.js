@@ -212,7 +212,7 @@ function filterIncidents() {
 }
 
 /**
- * Renderiza el muro de novedades con etiquetas de área, asignados y comentarios de cierre.
+ * Renderiza el muro de novedades con etiquetas de área, asignados, comentarios de cierre y opción de borrado Admin.
  */
 function renderIncidentsList(incidentsToRender) {
   const container = document.getElementById('incidents-timeline');
@@ -232,6 +232,8 @@ function renderIncidentsList(incidentsToRender) {
     const dateStr = new Date(inc.created_at).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
     const resolvedDateStr = inc.resolved_at ? new Date(inc.resolved_at).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) : '';
     const status = inc.status || 'PENDIENTE';
+
+    const isAdmin = selectedUser && selectedUser.role && selectedUser.role.toUpperCase().includes('ADMIN');
 
     return `
       <div class="incident-card">
@@ -257,13 +259,13 @@ function renderIncidentsList(incidentsToRender) {
           </div>
         ` : ''}
         
-<div class="incident-actions">
+        <div class="incident-actions">
           <span style="font-weight:600; color:#666;">Cambiar Estado:</span>
           <button onclick="updateIncidentStatus('${inc.id}', 'PENDIENTE')" class="btn-sm btn-danger">Pendiente</button>
           <button onclick="updateIncidentStatus('${inc.id}', 'PROCESO')" class="btn-sm btn-warning">En Proceso</button>
           <button onclick="openResolveModal('${inc.id}')" class="btn-sm btn-success">✓ Resolver con Comentario</button>
           
-          ${selectedUser && (selectedUser.role === 'ADMIN' || selectedUser.role === 'ADMINISTRADOR') ? `
+          ${isAdmin ? `
             <button onclick="deleteIncident('${inc.id}', '${inc.title.replace(/'/g, "\\'")}')" class="btn-sm btn-danger" style="margin-left: auto; background: #991b1b; color: white;">🗑️ Eliminar (Admin)</button>
           ` : ''}
         </div>
@@ -373,6 +375,39 @@ async function confirmResolveIncident() {
   }
 }
 
+/**
+ * Elimina una novedad de forma permanente de la base de datos (Exclusivo para ADMINISTRADOR).
+ */
+async function deleteIncident(incId, title) {
+  const isAdmin = selectedUser && selectedUser.role && selectedUser.role.toUpperCase().includes('ADMIN');
+  
+  if (!isAdmin) {
+    alert("No tienes permisos suficientes para realizar esta acción.");
+    return;
+  }
+
+  const confirmDelete = confirm(`⚠️ ¿ESTÁS SEGURO?\n\nEsta acción eliminará de forma permanente la novedad:\n"${title}"\n\nEsta operación no se puede deshacer.`);
+  
+  if (!confirmDelete) return;
+
+  hideMsgs();
+  
+  try {
+    const { error } = await _supabase
+      .from('incidents')
+      .delete()
+      .eq('id', incId);
+
+    if (error) throw error;
+
+    showSuccess("Novedad eliminada permanentemente de la base de datos.");
+    await loadIncidents();
+
+  } catch (err) {
+    showError("Error al eliminar la novedad: " + err.message);
+  }
+}
+
 /* Funciones CRUD de Categorías */
 async function createCategory(e) {
   e.preventDefault();
@@ -478,34 +513,4 @@ async function deleteCategory(catId, catName) {
   } else {
     showError("Error al eliminar categoría: " + error.message);
   }
-  /**
- * Elimina una novedad de forma permanente de la base de datos (Exclusivo para ADMINISTRADOR).
- */
-async function deleteIncident(incId, title) {
-  if (!selectedUser || (selectedUser.role !== 'ADMIN' && selectedUser.role !== 'ADMINISTRADOR')) {
-    alert("No tienes permisos suficientes para realizar esta acción.");
-    return;
-  }
-
-  const confirmDelete = confirm(`⚠️ ¿ESTÁS SEGURO?\n\nEsta acción eliminará de forma permanente la novedad:\n"${title}"\n\nEsta operación no se puede deshacer.`);
-  
-  if (!confirmDelete) return;
-
-  hideMsgs();
-  
-  try {
-    const { error } = await _supabase
-      .from('incidents')
-      .delete()
-      .eq('id', incId);
-
-    if (error) throw error;
-
-    showSuccess("Novedad eliminada permanentemente de la base de datos.");
-    await loadIncidents();
-
-  } catch (err) {
-    showError("Error al eliminar la novedad: " + err.message);
-  }
-}
 }
