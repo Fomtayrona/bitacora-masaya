@@ -37,7 +37,7 @@ function populateCategoriesSelect() {
 }
 
 /**
- * Consulta las novedades registradas en Supabase para la sede actual y las renderiza en el timeline.
+ * Consulta las novedades de la sede actual en Supabase y las dibuja aplicando filtros si existen.
  */
 async function loadIncidents() {
   const container = document.getElementById('incidents-timeline');
@@ -55,39 +55,8 @@ async function loadIncidents() {
     if (error) throw error;
     currentIncidents = data || [];
 
-    if (currentIncidents.length === 0) {
-      container.innerHTML = '<p style="text-align:center; color:#888; font-size:13px; padding:20px;">Sin novedades registradas en este turno.</p>';
-      return;
-    }
-
-    container.innerHTML = currentIncidents.map(inc => {
-      const author = inc.users ? (inc.users.display_name || inc.users.full_name) : 'Desconocido';
-      const dateStr = new Date(inc.created_at).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
-      const status = inc.status || 'PENDIENTE';
-
-      return `
-        <div class="incident-card">
-          <div class="incident-header">
-            <span class="incident-title">${inc.title}</span>
-            <div>
-              <span class="badge-role prio-${inc.priority}">${inc.priority}</span>
-              <span class="badge-role status-${status.replace(' ', '')}">${status}</span>
-            </div>
-          </div>
-          <div class="incident-meta">
-            🏷️ <b>${inc.category}</b> | 👤 <b>${author}</b> | 🕒 ${dateStr}
-          </div>
-          <div class="incident-body">${inc.description}</div>
-          
-          <div class="incident-actions">
-            <span style="font-weight:600; color:#666;">Cambiar Estado:</span>
-            <button onclick="updateIncidentStatus('${inc.id}', 'PENDIENTE')" class="btn-sm btn-danger">Pendiente</button>
-            <button onclick="updateIncidentStatus('${inc.id}', 'PROCESO')" class="btn-sm btn-warning">En Proceso</button>
-            <button onclick="updateIncidentStatus('${inc.id}', 'RESUELTO')" class="btn-sm btn-success">Resuelto</button>
-          </div>
-        </div>
-      `;
-    }).join('');
+    // Dibujar la lista con o sin filtros activos
+    filterIncidents();
 
   } catch (err) {
     container.innerHTML = `<p style="color:red; font-size:12px;">Error al cargar novedades: ${err.message}</p>`;
