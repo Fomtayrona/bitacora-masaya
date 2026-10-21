@@ -164,6 +164,23 @@ function filterMyTasks() {
 }
 
 /**
+ * Restablece todos los controles de filtro y muestra la totalidad de las novedades.
+ */
+function clearTaskFilters() {
+  const statusSelect = document.getElementById('filter-status');
+  const areaSelect = document.getElementById('filter-area');
+  const prioritySelect = document.getElementById('filter-priority');
+  const searchInput = document.getElementById('filter-search');
+
+  if (statusSelect) statusSelect.value = 'TODOS';
+  if (areaSelect) areaSelect.value = 'TODAS';
+  if (prioritySelect) prioritySelect.value = 'TODAS';
+  if (searchInput) searchInput.value = '';
+
+  filterIncidents();
+}
+
+/**
  * Aplica los criterios multidimensionales de filtrado.
  */
 function filterIncidents() {
