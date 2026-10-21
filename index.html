@@ -400,4 +400,170 @@
         full_name: document.getElementById('new-user-fullname').value,
         display_name: document.getElementById('new-user-display').value,
         email: document.getElementById('new-user-email').value,
-        role: document.getElementById('new-user-role
+        role: document.getElementById('new-user-role').value,
+        pin: document.getElementById('new-user-pin').value,
+        pin_hash: document.getElementById('new-user-pin').value,
+        pin_salt: 'default_salt',
+        area: 'GENERAL',
+        is_active: true
+      };
+
+      const { data: userCreated, error: uErr } = await _supabase.from('users').insert([newUser]).select();
+
+      if (uErr) {
+        if (uErr.message.includes('users_email_key')) {
+          showError("⚠️ Este correo ya está registrado. Usa el botón 'Sedes' en la lista de abajo para añadirle nuevas sedes.");
+        } else {
+          showError("Error al guardar usuario: " + uErr.message);
+        }
+        return;
+      }
+
+      const createdId = userCreated[0].id;
+
+      const userHotelRows = selectedHotels.map(hId => ({
+        user_id: createdId,
+        hotel_id: hId
+      }));
+
+      const { error: uhErr } = await _supabase.from('user_hotels').insert(userHotelRows);
+
+      if (uhErr) {
+        showError("Usuario creado, pero hubo un error asignando sedes: " + uhErr.message);
+      } else {
+        showSuccess("¡Usuario registrado y asignado a sus sedes exitosamente!");
+        e.target.reset();
+        document.querySelectorAll('input[name="user-hotels"]').forEach(cb => cb.checked = false);
+        await refreshData();
+        renderUsersTable();
+      }
+    }
+
+    function getUserHotelsBadges(userId) {
+      const hotelIds = allUserHotels
+        .filter(uh => uh.user_id === userId)
+        .map(uh => uh.hotel_id);
+
+      if (hotelIds.length === 0) return '<span style="color:#999; font-size:11px;">Sin sedes</span>';
+
+      return hotelIds.map(hId => {
+        const hotel = allHotels.find(h => h.id === hId);
+        return hotel ? `<span class="badge-hotel">🏨 ${hotel.name}</span>` : '';
+      }).join('');
+    }
+
+    function renderUsersTable() {
+      const tbody = document.getElementById('users-table-body');
+      tbody.innerHTML = allUsers.map(u => `
+        <tr>
+          <td><b>${u.display_name || u.full_name}</b><br><small style="color:#666">${u.email || ''}</small></td>
+          <td>${getUserHotelsBadges(u.id)}</td>
+          <td><span class="badge-role ${u.role === 'ADMIN' ? 'badge-admin' : 'badge-op'}">${u.role}</span></td>
+          <td><code>${u.pin || '****'}</code></td>
+          <td>
+            <button onclick="openEditModal('${u.id}')" class="btn-sm btn-edit">Sedes</button>
+            <button onclick="toggleUserStatus('${u.id}', ${u.is_active !== false})" class="btn-sm btn-danger">
+              ${u.is_active !== false ? 'Desactivar' : 'Activar'}
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openEditModal(userId) {
+      editingUserId = userId;
+      const user = allUsers.find(u => u.id === userId);
+      document.getElementById('edit-user-name').innerText = user.full_name + " (" + user.email + ")";
+
+      const currentHotelIds = allUserHotels
+        .filter(uh => uh.user_id === userId)
+        .map(uh => uh.hotel_id);
+
+      const container = document.getElementById('edit-hotels-checkboxes');
+      container.innerHTML = allHotels.map(h => `
+        <label class="checkbox-item">
+          <input type="checkbox" name="edit-user-hotels" value="${h.id}" ${currentHotelIds.includes(h.id) ? 'checked' : ''}>
+          ${h.name}
+        </label>
+      `).join('');
+
+      document.getElementById('edit-modal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-modal').style.display = 'none';
+      editingUserId = null;
+    }
+
+    async function saveUserHotels() {
+      if (!editingUserId) return;
+
+      const selectedHotels = Array.from(document.querySelectorAll('input[name="edit-user-hotels"]:checked')).map(cb => cb.value);
+
+      if (selectedHotels.length === 0) {
+        alert("El colaborador debe tener al menos una sede asignada.");
+        return;
+      }
+
+      await _supabase.from('user_hotels').delete().eq('user_id', editingUserId);
+
+      const rows = selectedHotels.map(hId => ({
+        user_id: editingUserId,
+        hotel_id: hId
+      }));
+
+      const { error } = await _supabase.from('user_hotels').insert(rows);
+
+      if (!error) {
+        closeEditModal();
+        await refreshData();
+        renderUsersTable();
+        showSuccess("¡Sedes del usuario actualizadas exitosamente!");
+      } else {
+        alert("Error al actualizar sedes: " + error.message);
+      }
+    }
+
+    async function toggleUserStatus(userId, currentActive) {
+      const { error } = await _supabase.from('users').update({ is_active: !currentActive }).eq('id', userId);
+      if (!error) {
+        await refreshData();
+        renderUsersTable();
+      }
+    }
+
+    function resetFlow() {
+      currentPin = "";
+      selectedUser = null;
+      document.getElementById('main-card').classList.remove('wide');
+      document.getElementById('hotel-select').value = "";
+      document.getElementById('user-select').value = "";
+      document.getElementById('user-select').disabled = true;
+      document.getElementById('step-pin').style.display = 'none';
+      document.getElementById('step-session').style.display = 'none';
+      document.getElementById('step-select').style.display = 'block';
+      hideMsgs();
+    }
+
+    function showError(msg) {
+      const errDiv = document.getElementById('error-msg');
+      errDiv.innerHTML = msg;
+      errDiv.style.display = 'block';
+    }
+
+    function showSuccess(msg) {
+      const succDiv = document.getElementById('success-msg');
+      succDiv.innerText = msg;
+      succDiv.style.display = 'block';
+      setTimeout(() => succDiv.style.display = 'none', 3000);
+    }
+
+    function hideMsgs() {
+      document.getElementById('error-msg').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'none';
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
