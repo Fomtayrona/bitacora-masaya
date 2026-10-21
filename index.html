@@ -12,13 +12,13 @@
     body { background-color: #1a252f; color: #333; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
     
     .card { background: white; width: 100%; max-width: 480px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; }
-    .card.wide { max-width: 940px; text-align: left; }
+    .card.wide { max-width: 960px; text-align: left; }
     
     h1 { color: #1a252f; font-size: 22px; margin-bottom: 6px; font-weight: 700; text-align: center; }
     p.subtitle { color: #666; font-size: 13px; margin-bottom: 20px; text-align: center; }
 
     .form-group { text-align: left; margin-bottom: 15px; }
-    label { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
+    label { font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
     select, input, textarea { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; background: #fff; }
     textarea { resize: vertical; min-height: 80px; }
     select:focus, input:focus, textarea:focus { border-color: #007bff; }
@@ -44,8 +44,8 @@
     .btn-back { background: none; border: none; color: #64748b; font-size: 13px; cursor: pointer; margin-top: 15px; text-decoration: underline; width: 100%; text-align: center; }
     .btn-primary { background: #1a252f; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px; }
 
-    .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-    .full-width { grid-column: span 2; }
+    .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .full-width { grid-column: 1 / -1; }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
     th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
     th { background: #f8fafc; color: #475569; font-weight: 600; }
@@ -55,7 +55,8 @@
     .badge-op { background: #e0e7ff; color: #3730a3; }
     .badge-inactive { background: #f1f5f9; color: #64748b; }
     .badge-hotel { background: #0284c7; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; display: inline-block; margin-right: 4px; margin-bottom: 2px; }
-    
+    .badge-room-blocked { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; display: inline-block; }
+
     .status-PENDIENTE { background: #fee2e2; color: #991b1b; }
     .status-PROCESO { background: #fef3c7; color: #92400e; }
     .status-RESUELTO { background: #dcfce7; color: #166534; }
@@ -65,7 +66,7 @@
     .prio-ALTA { background: #fef3c7; color: #92400e; }
     .prio-CRITICA { background: #fee2e2; color: #991b1b; }
 
-    .btn-sm { padding: 4px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; margin-right: 4px; }
+    .btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 5px; border: none; cursor: pointer; margin-right: 4px; font-weight: 600; }
     .btn-danger { background: #fee2e2; color: #991b1b; }
     .btn-warning { background: #fef3c7; color: #92400e; }
     .btn-success { background: #dcfce7; color: #166534; }
@@ -73,52 +74,28 @@
     .btn-retry { background: #0284c7; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 10px; font-weight: 600; }
 
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
-    .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 450px; }
+    .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 480px; }
 
     .incident-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 12px; }
-    .incident-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .incident-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px; }
     .incident-title { font-weight: 700; font-size: 15px; color: #1a252f; }
-    .incident-meta { font-size: 11px; color: #64748b; margin-bottom: 8px; }
+    .incident-meta { font-size: 11px; color: #64748b; margin-bottom: 8px; line-height: 1.5; }
     .incident-body { font-size: 13px; color: #334155; line-height: 1.4; white-space: pre-line; margin-bottom: 10px; }
-    .incident-actions { display: flex; gap: 6px; align-items: center; border-top: 1px dashed #e2e8f0; padding-top: 8px; font-size: 12px; }
+    
+    .resolution-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 12px; color: #166534; }
+    .incident-actions { display: flex; gap: 6px; align-items: center; border-top: 1px dashed #e2e8f0; padding-top: 10px; font-size: 12px; flex-wrap: wrap; }
 
     .nav-tabs { display: flex; gap: 10px; border-bottom: 2px solid #e2e8f0; margin-bottom: 20px; }
     .tab-btn { background: none; border: none; padding: 8px 16px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
     .tab-btn.active { color: #0284c7; border-bottom-color: #0284c7; }
 
-    /* Estilos de la Barra de Filtros */
-    .filters-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      background: #f8fafc;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      border: 1px solid #e2e8f0;
-      text-align: left;
-    }
-    .filter-item {
-      flex: 1;
-      min-width: 160px;
-    }
-    .filter-item label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: block;
-      margin-bottom: 4px;
-    }
-    .filter-item select, .filter-item input {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      font-size: 13px;
-      background: #ffffff;
-    }
+    /* Barra de Filtros */
+    .filters-bar { display: flex; flex-wrap: wrap; gap: 12px; background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0; text-align: left; }
+    .filter-item { flex: 1; min-width: 150px; }
+    .filter-item label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px; }
+    .filter-item select, .filter-item input { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; background: #ffffff; }
+
+    .my-tasks-banner { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
   </style>
 </head>
 <body>
@@ -181,6 +158,12 @@
         <button onclick="resetFlow()" class="btn-sm btn-danger">Cerrar Sesión</button>
       </div>
 
+      <!-- BANNER DE MIS TAREAS PENDIENTES -->
+      <div id="my-tasks-banner" class="my-tasks-banner" style="display: none;">
+        <span id="my-tasks-count">👤 Tienes 0 tareas asignadas pendientes</span>
+        <button class="btn-sm btn-edit" onclick="filterMyTasks()">Ver mis tareas</button>
+      </div>
+
       <!-- PESTAÑAS NAVEGACIÓN ADMIN -->
       <div id="admin-nav" class="nav-tabs" style="display: none;">
         <button class="tab-btn active" onclick="switchAdminTab('incidents')">📋 Novedades de Turno</button>
@@ -197,6 +180,26 @@
               <label>Categoría</label>
               <select id="inc-category" required></select>
             </div>
+            
+            <div class="form-group">
+              <label>Área Destino</label>
+              <select id="inc-target-area" required>
+                <option value="RECEPCION" selected>Recepción</option>
+                <option value="MANTENIMIENTO">Mantenimiento</option>
+                <option value="CAMARERIA">Camarería (Ama de Llaves)</option>
+                <option value="MESAS_BAR">Mesas y Bar</option>
+                <option value="COCINA">Cocina</option>
+                <option value="ADMINISTRACION">Administración</option>
+                <option value="GERENCIA">Gerencia</option>
+                <option value="SISTEMAS">Sistemas</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Asignar a Persona (Opcional)</label>
+              <select id="inc-assigned-to"><option value="">-- Sin asignar (Para el área) --</option></select>
+            </div>
+
             <div class="form-group">
               <label>Prioridad</label>
               <select id="inc-priority">
@@ -206,10 +209,19 @@
                 <option value="CRITICA">🚨 Crítica</option>
               </select>
             </div>
+
+            <div class="form-group full-width">
+              <label class="checkbox-item" style="text-transform: none; font-size: 13px; color: #dc2626; font-weight: 700;">
+                <input type="checkbox" id="inc-room-blocked">
+                🚨 ¿Esta novedad bloquea o inhabilita una habitación/servicio?
+              </label>
+            </div>
+
             <div class="form-group full-width">
               <label>Asunto / Título Resumen</label>
               <input type="text" id="inc-title" placeholder="Ej: Fuga de agua en habitación 204" required />
             </div>
+
             <div class="form-group full-width">
               <label>Detalle de la Novedad</label>
               <textarea id="inc-description" placeholder="Escribe observaciones, acciones tomadas o seguimiento necesario..." required></textarea>
@@ -233,6 +245,21 @@
           </div>
 
           <div class="filter-item">
+            <label>Filtrar Área</label>
+            <select id="filter-area" onchange="filterIncidents()">
+              <option value="TODAS">Todas las áreas</option>
+              <option value="RECEPCION">Recepción</option>
+              <option value="MANTENIMIENTO">Mantenimiento</option>
+              <option value="CAMARERIA">Camarería</option>
+              <option value="MESAS_BAR">Mesas y Bar</option>
+              <option value="COCINA">Cocina</option>
+              <option value="ADMINISTRACION">Administración</option>
+              <option value="GERENCIA">Gerencia</option>
+              <option value="SISTEMAS">Sistemas</option>
+            </select>
+          </div>
+
+          <div class="filter-item">
             <label>Filtrar Prioridad</label>
             <select id="filter-priority" onchange="filterIncidents()">
               <option value="TODAS">Todas las prioridades</option>
@@ -245,7 +272,7 @@
 
           <div class="filter-item">
             <label>Buscar Texto</label>
-            <input type="text" id="filter-search" placeholder="Buscar título o detalle..." oninput="filterIncidents()" />
+            <input type="text" id="filter-search" placeholder="Buscar título, área o persona..." oninput="filterIncidents()" />
           </div>
         </div>
 
@@ -348,8 +375,26 @@
     </div>
   </div>
 
-<!-- Carga de Módulos JavaScript (v1.2 para forzar la actualización) -->
-  <script src="app.js?v=1.2"></script>
-  <script src="incidents.js?v=1.2"></script>
+  <!-- MODAL RESOLVER NOVEDAD CON COMENTARIO -->
+  <div id="resolve-modal" class="modal">
+    <div class="modal-content">
+      <h3 style="font-size: 16px; margin-bottom: 8px; color: #166534;">✅ Resolver Novedad</h3>
+      <p id="resolve-incident-title" style="font-size: 13px; color: #334155; margin-bottom: 12px; font-weight: 600;"></p>
+      
+      <div class="form-group">
+        <label>Observaciones de solución / Comentario explicativo</label>
+        <textarea id="resolve-notes" placeholder="Ej: Se cambiaron los cables de la luz y se verificó que el bombillo enciende correctamente." required></textarea>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <button onclick="confirmResolveIncident()" class="btn-primary" style="margin: 0; background: #166534;">Confirmar Solución</button>
+        <button onclick="closeResolveModal()" class="btn-sm btn-danger" style="padding: 10px 15px; font-size: 13px;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Carga de Módulos JavaScript (v1.3) -->
+  <script src="app.js?v=1.3"></script>
+  <script src="incidents.js?v=1.3"></script>
 </body>
 </html>
