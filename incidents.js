@@ -398,16 +398,22 @@ async function deleteIncident(incId, title) {
       .delete()
       .eq('id', incId);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error Supabase DELETE:", error);
+      alert("Error de Supabase al borrar: " + error.message);
+      showError("Error al eliminar la novedad: " + error.message);
+      return;
+    }
 
-    showSuccess("Novedad eliminada permanentemente de la base de datos.");
+    showSuccess("¡Novedad eliminada permanentemente!");
     await loadIncidents();
 
   } catch (err) {
+    console.error("Error JS DELETE:", err);
+    alert("Error de ejecución: " + err.message);
     showError("Error al eliminar la novedad: " + err.message);
   }
 }
-
 /* Funciones CRUD de Categorías */
 async function createCategory(e) {
   e.preventDefault();
