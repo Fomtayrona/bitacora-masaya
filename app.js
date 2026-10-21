@@ -232,8 +232,12 @@ async function openSession() {
   roleBadge.innerText = selectedUser.role;
   roleBadge.className = `badge-role ${selectedUser.role === 'ADMIN' ? 'badge-admin' : 'badge-op'}`;
 
-  // Inicializa módulo de novedades (si la función existe en incidents.js)
+  // Carga previa de datos compartidos antes de renderizar
+  await refreshData();
+
+  // Inicializa selectores y lista de novedades
   if (typeof populateCategoriesSelect === 'function') populateCategoriesSelect();
+  if (typeof populateAssignedUsersSelect === 'function') populateAssignedUsersSelect();
   if (typeof loadIncidents === 'function') await loadIncidents();
 
   const adminNav = document.getElementById('admin-nav');
@@ -242,7 +246,6 @@ async function openSession() {
     document.getElementById('tab-users').style.display = 'none';
     document.getElementById('tab-categories').style.display = 'none';
     document.getElementById('incidents-section').style.display = 'block';
-    await refreshData();
     renderUsersTable();
     if (typeof renderCategoriesTable === 'function') renderCategoriesTable();
   } else {
