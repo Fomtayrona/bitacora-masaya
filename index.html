@@ -180,23 +180,19 @@
     let allUsers = [];
     let allHotels = [];
 
-    function fetchWithTimeout(promise, ms = 4000) {
-      return Promise.race([
-        promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Tiempo de espera agotado")), ms))
-      ]);
-    }
-
     async function initApp() {
       const hotelSelect = document.getElementById('hotel-select');
       try {
-        if (!window.supabase) throw new Error("Librería Supabase no disponible.");
-        
+        if (!window.supabase) {
+          throw new Error("Librería de Supabase no cargada.");
+        }
+
         _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const response = await fetchWithTimeout(_supabase.from('hotels').select('*'), 4000);
-        if (response.error) throw response.error;
-        allHotels = response.data || [];
+        // Consulta directa de hoteles
+        const { data: hotels, error } = await _supabase.from('hotels').select('*');
+        if (error) throw error;
+        allHotels = hotels || [];
 
         const newUserHotel = document.getElementById('new-user-hotel');
 
@@ -214,19 +210,19 @@
         refreshUsers();
 
       } catch (err) {
-        showError("⚠️ " + err.message);
+        showError("⚠️ Error: " + err.message);
         hotelSelect.innerHTML = '<option value="">Error de conexión</option>';
       }
     }
 
     async function refreshUsers() {
       try {
-        const response = await fetchWithTimeout(_supabase.from('users').select('*'), 4000);
-        if (!response.error) {
-          allUsers = response.data || [];
+        const { data: users, error } = await _supabase.from('users').select('*');
+        if (!error) {
+          allUsers = users || [];
         }
       } catch (e) {
-        console.warn("No se cargaron usuarios:", e.message);
+        console.warn("Error cargando usuarios:", e);
       }
     }
 
@@ -259,162 +255,4 @@
       if (!userId) return;
 
       selectedUser = allUsers.find(u => u.id === userId);
-      document.getElementById('selected-user-name').innerText = `👤 ${selectedUser.display_name || selectedUser.full_name}`;
-      
-      document.getElementById('step-select').style.display = 'none';
-      document.getElementById('step-pin').style.display = 'block';
-      clearPin();
-    }
-
-    function pressKey(num) {
-      if (currentPin.length < 4) {
-        currentPin += num;
-        updatePinDots();
-        if (currentPin.length === 4) validatePin();
-      }
-    }
-
-    function deleteLastPin() {
-      currentPin = currentPin.slice(0, -1);
-      updatePinDots();
-    }
-
-    function clearPin() {
-      currentPin = "";
-      updatePinDots();
-      hideMsgs();
-    }
-
-    function updatePinDots() {
-      for (let i = 0; i < 4; i++) {
-        const dot = document.getElementById(`dot-${i}`);
-        if (i < currentPin.length) dot.classList.add('filled');
-        else dot.classList.remove('filled');
-      }
-    }
-
-    function validatePin() {
-      if (currentPin === selectedUser.pin) {
-        openSession();
-      } else {
-        showError("❌ PIN Incorrecto");
-        setTimeout(() => clearPin(), 800);
-      }
-    }
-
-    async function openSession() {
-      document.getElementById('step-pin').style.display = 'none';
-      document.getElementById('step-session').style.display = 'block';
-      document.getElementById('main-card').classList.add('wide');
-
-      document.getElementById('session-user').innerText = selectedUser.display_name || selectedUser.full_name;
-      const roleBadge = document.getElementById('session-role');
-      roleBadge.innerText = selectedUser.role;
-      roleBadge.className = `badge-role ${selectedUser.role === 'ADMIN' ? 'badge-admin' : 'badge-op'}`;
-
-      if (selectedUser.role === 'ADMIN') {
-        document.getElementById('admin-panel').style.display = 'block';
-        document.getElementById('operator-panel').style.display = 'none';
-        await refreshUsers();
-        renderUsersTable();
-      } else {
-        document.getElementById('admin-panel').style.display = 'none';
-        document.getElementById('operator-panel').style.display = 'block';
-      }
-    }
-
-    async function createUser(e) {
-      e.preventDefault();
-      hideMsgs();
-
-      const newUser = {
-        hotel_id: document.getElementById('new-user-hotel').value,
-        full_name: document.getElementById('new-user-fullname').value,
-        display_name: document.getElementById('new-user-display').value,
-        email: document.getElementById('new-user-email').value,
-        role: document.getElementById('new-user-role').value,
-        pin: document.getElementById('new-user-pin').value,
-        pin_hash: document.getElementById('new-user-pin').value,
-        pin_salt: 'default_salt',
-        area: 'GENERAL',
-        is_active: true
-      };
-
-      const { error } = await _supabase.from('users').insert([newUser]);
-
-      if (error) {
-        showError("Error al guardar: " + error.message);
-      } else {
-        showSuccess("¡Usuario creado exitosamente!");
-        e.target.reset();
-        await refreshUsers();
-        renderUsersTable();
-      }
-    }
-
-    function getHotelName(hotelId) {
-      if (!hotelId) return 'Sin asignar';
-      const hotel = allHotels.find(h => h.id === hotelId);
-      return hotel ? hotel.name : 'Sede no encontrada';
-    }
-
-    function renderUsersTable() {
-      const tbody = document.getElementById('users-table-body');
-      tbody.innerHTML = allUsers.map(u => `
-        <tr>
-          <td><b>${u.display_name || u.full_name}</b><br><small style="color:#666">${u.email || ''}</small></td>
-          <td><span class="badge-hotel">🏨 ${getHotelName(u.hotel_id)}</span></td>
-          <td><span class="badge-role ${u.role === 'ADMIN' ? 'badge-admin' : 'badge-op'}">${u.role}</span></td>
-          <td><code>${u.pin || '****'}</code></td>
-          <td>
-            <button onclick="toggleUserStatus('${u.id}', ${u.is_active !== false})" class="btn-sm btn-danger">
-              ${u.is_active !== false ? 'Desactivar' : 'Activar'}
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    async function toggleUserStatus(userId, currentActive) {
-      const { error } = await _supabase.from('users').update({ is_active: !currentActive }).eq('id', userId);
-      if (!error) {
-        await refreshUsers();
-        renderUsersTable();
-      }
-    }
-
-    function resetFlow() {
-      currentPin = "";
-      selectedUser = null;
-      document.getElementById('main-card').classList.remove('wide');
-      document.getElementById('hotel-select').value = "";
-      document.getElementById('user-select').value = "";
-      document.getElementById('user-select').disabled = true;
-      document.getElementById('step-pin').style.display = 'none';
-      document.getElementById('step-session').style.display = 'none';
-      document.getElementById('step-select').style.display = 'block';
-      hideMsgs();
-    }
-
-    function showError(msg) {
-      const errDiv = document.getElementById('error-msg');
-      errDiv.innerText = msg;
-      errDiv.style.display = 'block';
-    }
-
-    function showSuccess(msg) {
-      const succDiv = document.getElementById('success-msg');
-      succDiv.innerText = msg;
-      succDiv.style.display = 'block';
-      setTimeout(() => succDiv.style.display = 'none', 3000);
-    }
-
-    function hideMsgs() {
-      document.getElementById('error-msg').style.display = 'none';
-      document.getElementById('success-msg').style.display = 'none';
-    }
-
-    initApp();
-  </script>
-</body>
-</html>
+      document
