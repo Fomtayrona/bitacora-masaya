@@ -3,351 +3,284 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bitácora Masaya - Control Operacional</title>
-  <!-- SDK Supabase Client -->
+  <title>Bitácora Masaya - Muro Operativo</title>
+  
+  <!-- Estilos e Iconos -->
+  <link rel="stylesheet" href="styles.css?v=3.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    /* Estilos Generales y Resets */
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; }
-    body { background-color: #1a252f; color: #333; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    
-    .card { background: white; width: 100%; max-width: 480px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; }
-    .card.wide { max-width: 960px; text-align: left; }
-    
-    h1 { color: #1a252f; font-size: 22px; margin-bottom: 6px; font-weight: 700; text-align: center; }
-    p.subtitle { color: #666; font-size: 13px; margin-bottom: 20px; text-align: center; }
-
-    .form-group { text-align: left; margin-bottom: 15px; }
-    label { font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
-    select, input, textarea { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; background: #fff; }
-    textarea { resize: vertical; min-height: 80px; }
-    select:focus, input:focus, textarea:focus { border-color: #007bff; }
-
-    .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; background: #f8fafc; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; }
-    .checkbox-item { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: #334155; cursor: pointer; }
-    .checkbox-item input { width: auto; margin: 0; cursor: pointer; }
-
-    /* Teclado PIN */
-    .pin-display { display: flex; justify-content: center; gap: 12px; margin: 20px 0; }
-    .pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #ccc; transition: all 0.2s; }
-    .pin-dot.filled { background-color: #1a252f; border-color: #1a252f; }
-
-    .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 15px; }
-    .key { background: #f4f6f8; border: none; padding: 18px 0; font-size: 20px; font-weight: 600; border-radius: 10px; cursor: pointer; color: #1a252f; }
-    .key:active { background: #e2e8f0; }
-    .key.action { font-size: 14px; background: #fee2e2; color: #991b1b; }
-
-    .user-badge { background: #e0f2fe; color: #0369a1; padding: 8px 12px; border-radius: 6px; font-weight: 600; font-size: 14px; margin-bottom: 15px; display: inline-block; }
-    .error-msg { color: #dc2626; font-size: 13px; margin-top: 15px; min-height: 18px; font-weight: 500; background: #fef2f2; padding: 8px; border-radius: 6px; display: none; text-align: center; word-break: break-word; }
-    .success-msg { color: #166534; font-size: 13px; margin-top: 15px; background: #f0fdf4; padding: 8px; border-radius: 6px; display: none; text-align: center; }
-    
-    .btn-back { background: none; border: none; color: #64748b; font-size: 13px; cursor: pointer; margin-top: 15px; text-decoration: underline; width: 100%; text-align: center; }
-    .btn-primary { background: #1a252f; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px; }
-
-    .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
-    .full-width { grid-column: 1 / -1; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-    th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
-    th { background: #f8fafc; color: #475569; font-weight: 600; }
-    
-    .badge-role { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-    .badge-admin { background: #fef3c7; color: #92400e; }
-    .badge-op { background: #e0e7ff; color: #3730a3; }
-    .badge-inactive { background: #f1f5f9; color: #64748b; }
-    .badge-hotel { background: #0284c7; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; display: inline-block; margin-right: 4px; margin-bottom: 2px; }
-    .badge-room-blocked { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; display: inline-block; }
-
-    .status-PENDIENTE { background: #fee2e2; color: #991b1b; }
-    .status-PROCESO { background: #fef3c7; color: #92400e; }
-    .status-RESUELTO { background: #dcfce7; color: #166534; }
-
-    .prio-BAJA { background: #f1f5f9; color: #475569; }
-    .prio-MEDIA { background: #e0f2fe; color: #0369a1; }
-    .prio-ALTA { background: #fef3c7; color: #92400e; }
-    .prio-CRITICA { background: #fee2e2; color: #991b1b; }
-
-    .btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 5px; border: none; cursor: pointer; margin-right: 4px; font-weight: 600; }
-    .btn-danger { background: #fee2e2; color: #991b1b; }
-    .btn-warning { background: #fef3c7; color: #92400e; }
-    .btn-success { background: #dcfce7; color: #166534; }
-    .btn-edit { background: #e0f2fe; color: #0369a1; }
-    .btn-retry { background: #0284c7; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 10px; font-weight: 600; }
-
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
-    .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 480px; }
-
-    .incident-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 12px; }
-    .incident-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px; }
-    .incident-title { font-weight: 700; font-size: 15px; color: #1a252f; }
-    .incident-meta { font-size: 11px; color: #64748b; margin-bottom: 8px; line-height: 1.5; }
-    .incident-body { font-size: 13px; color: #334155; line-height: 1.4; white-space: pre-line; margin-bottom: 10px; }
-    
-    .resolution-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 12px; color: #166534; }
-    .incident-actions { display: flex; gap: 6px; align-items: center; border-top: 1px dashed #e2e8f0; padding-top: 10px; font-size: 12px; flex-wrap: wrap; }
-
-    .nav-tabs { display: flex; gap: 10px; border-bottom: 2px solid #e2e8f0; margin-bottom: 20px; }
-    .tab-btn { background: none; border: none; padding: 8px 16px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
-    .tab-btn.active { color: #0284c7; border-bottom-color: #0284c7; }
-
-    /* Barra de Filtros */
-    .filters-bar { display: flex; flex-wrap: wrap; gap: 12px; background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0; text-align: left; }
-    .filter-item { flex: 1; min-width: 150px; }
-    .filter-item label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px; }
-    .filter-item select, .filter-item input { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; background: #ffffff; }
-
-    .my-tasks-banner { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-  </style>
 </head>
 <body>
 
-  <div id="main-card" class="card">
-    <h1>Bitácora Masaya</h1>
-    <p class="subtitle">Control Operacional Recepción</p>
+  <!-- PANTALLA 1: LOGIN EXPRESS (PIN) -->
+  <div id="login-screen" class="login-container">
+    <div class="login-card">
+      <div class="brand-logo">
+        <h2>🏨 BITÁCORA MASAYA</h2>
+        <p>Control Operativo de Sede</p>
+      </div>
 
-    <!-- PASO 1: Selección de Hotel y Usuario -->
-    <div id="step-select">
+      <!-- Selector de Sede -->
       <div class="form-group">
-        <label>1. Selecciona Hotel</label>
-        <select id="hotel-select" onchange="loadUsersForHotel()"><option value="">Cargando hoteles...</option></select>
+        <label for="login-hotel-select">📍 Selecciona la Sede:</label>
+        <select id="login-hotel-select" onchange="onHotelChange()"></select>
       </div>
 
+      <!-- Selector de Usuario -->
       <div class="form-group">
-        <label>2. Selecciona tu Usuario</label>
-        <select id="user-select" disabled><option value="">Primero selecciona hotel</option></select>
+        <label for="login-user-select">👤 Usuario / Colaborador:</label>
+        <select id="login-user-select"></select>
       </div>
-    </div>
 
-  <!-- PASO 2: Teclado PIN -->
-      <div id="step-pin" style="display: none;">
-        <div id="selected-user-name" class="user-badge"></div>
-        <p style="font-size: 13px; color: #666;">Ingresa tu PIN de 4 dígitos:</p>
-        
-        <div class="pin-display">
-          <div class="pin-dot" id="dot-0"></div>
-          <div class="pin-dot" id="dot-1"></div>
-          <div class="pin-dot" id="dot-2"></div>
-          <div class="pin-dot" id="dot-3"></div>
+      <!-- Teclado PIN -->
+      <div class="form-group">
+        <label>🔑 Ingresa tu PIN (4 dígitos):</label>
+        <div class="pin-display" id="pin-display">••••</div>
+        <div class="pin-pad">
+          <button type="button" class="pin-btn" onclick="appendPin('1')">1</button>
+          <button type="button" class="pin-btn" onclick="appendPin('2')">2</button>
+          <button type="button" class="pin-btn" onclick="appendPin('3')">3</button>
+          <button type="button" class="pin-btn" onclick="appendPin('4')">4</button>
+          <button type="button" class="pin-btn" onclick="appendPin('5')">5</button>
+          <button type="button" class="pin-btn" onclick="appendPin('6')">6</button>
+          <button type="button" class="pin-btn" onclick="appendPin('7')">7</button>
+          <button type="button" class="pin-btn" onclick="appendPin('8')">8</button>
+          <button type="button" class="pin-btn" onclick="appendPin('9')">9</button>
+          <button type="button" class="pin-btn pin-btn-clear" onclick="clearPin()">C</button>
+          <button type="button" class="pin-btn" onclick="appendPin('0')">0</button>
+          <button type="button" class="pin-btn pin-btn-enter" onclick="submitPin()">✓ OK</button>
         </div>
-
-      <div class="keypad">
-        <button class="key" onclick="pressKey('1')">1</button>
-        <button class="key" onclick="pressKey('2')">2</button>
-        <button class="key" onclick="pressKey('3')">3</button>
-        <button class="key" onclick="pressKey('4')">4</button>
-        <button class="key" onclick="pressKey('5')">5</button>
-        <button class="key" onclick="pressKey('6')">6</button>
-        <button class="key" onclick="pressKey('7')">7</button>
-        <button class="key" onclick="pressKey('8')">8</button>
-        <button class="key" onclick="pressKey('9')">9</button>
-        <button class="key action" onclick="clearPin()">C</button>
-        <button class="key" onclick="pressKey('0')">0</button>
-        <button class="key action" onclick="deleteLastPin()">⌫</button>
       </div>
-
-      <button class="btn-back" onclick="resetFlow()">← Cambiar de usuario</button>
+      
+      <div id="login-msg" class="msg-box"></div>
     </div>
+  </div>
 
-    <!-- PASO 3: Sesión / Panel Principal -->
-    <div id="step-session" style="display: none;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-        <div>
-          <span id="session-user" style="font-weight: 700; color: #1a252f;"></span>
-          <span id="session-role" class="badge-role badge-op" style="margin-left: 6px;"></span>
-          <span id="session-hotel-name" class="badge-hotel" style="margin-left: 6px;"></span>
-        </div>
-        <button onclick="resetFlow()" class="btn-sm btn-danger">Cerrar Sesión</button>
+  <!-- PANTALLA 2: APP PRINCIPAL (MURO OPERATIVO) -->
+  <div id="app-screen" class="app-container" style="display: none;">
+    
+    <!-- Barra Superior / Header -->
+    <header class="app-header">
+      <div class="header-info">
+        <span class="hotel-badge" id="current-hotel-name">Sede</span>
+        <span class="user-badge" id="current-user-name">Usuario</span>
       </div>
+      <button onclick="logout()" class="btn-logout">🚪 Salir</button>
+    </header>
 
-      <!-- BANNER DE MIS TAREAS PENDIENTES -->
+    <!-- Pestañas de Navegación (Solo visibles según rol) -->
+    <nav class="app-tabs">
+      <button class="tab-btn active" id="tab-incidents-btn" onclick="switchTab('incidents')">📋 Novedades</button>
+      <button class="tab-btn admin-only" id="tab-users-btn" onclick="switchTab('users')" style="display: none;">👥 Colaboradores</button>
+      <button class="tab-btn admin-only" id="tab-categories-btn" onclick="switchTab('categories')" style="display: none;">🏷️ Categorías</button>
+    </nav>
+
+    <!-- Banner Global de Alertas/Mensajes -->
+    <div id="global-msg" class="msg-box" style="display: none; margin: 15px 20px 0 20px;"></div>
+
+    <!-- SECCIÓN 1: NOVEDADES Y TAREAS (MURO) -->
+    <main id="tab-incidents" class="tab-content active">
+      
+      <!-- Banner de Tareas Asignadas Directas -->
       <div id="my-tasks-banner" class="my-tasks-banner" style="display: none;">
-        <span id="my-tasks-count">👤 Tienes 0 tareas asignadas pendientes</span>
+        <span id="my-tasks-count">👤 Tienes tareas pendientes asignadas a ti.</span>
         <div style="display: flex; gap: 8px;">
-          <button class="btn-sm btn-edit" onclick="filterMyTasks()">Ver mis tareas</button>
-          <button class="btn-sm" style="background:#e2e8f0; color:#334155;" onclick="clearTaskFilters()">🔄 Ver todas</button>
+          <button onclick="filterMyTasks()" class="btn-sm btn-light">Ver mis tareas</button>
+          <button onclick="clearTaskFilters()" class="btn-sm btn-outline-light">Ver todo</button>
         </div>
       </div>
 
-      <!-- PESTAÑAS NAVEGACIÓN ADMIN -->
-      <div id="admin-nav" class="nav-tabs" style="display: none;">
-        <button class="tab-btn active" onclick="switchAdminTab('incidents')">📋 Novedades de Turno</button>
-        <button class="tab-btn" onclick="switchAdminTab('users')">👥 Colaboradores</button>
-        <button class="tab-btn" onclick="switchAdminTab('categories')">🏷️ Categorías</button>
-      </div>
+      <!-- Acciones Principales: Botón Gigante y Filtros -->
+      <div class="action-bar">
+        <button onclick="toggleNewIncidentForm()" class="btn-primary btn-giant">
+          ➕ CREAR NOVEDAD RÁPIDA (10s)
+        </button>
 
-      <!-- SECCIÓN NOVEDADES DE TURNO -->
-      <div id="incidents-section">
-        <h3 style="font-size: 16px; margin-bottom: 12px; color: #1a252f;">📝 Registrar Novedad de Turno</h3>
-        <form onsubmit="createIncident(event)">
-          <div class="grid-form">
-            <div class="form-group">
-              <label>Categoría</label>
-              <select id="inc-category" required></select>
-            </div>
+        <!-- Formulario Desplegable para Nueva Novedad -->
+        <div id="new-incident-form-container" class="card-form" style="display: none;">
+          <h3>📢 Registrar Nueva Novedad / Requerimiento</h3>
+          <form onsubmit="createIncident(event)">
             
-            <div class="form-group">
-              <label>Área Destino</label>
-              <select id="inc-target-area" required>
-                <option value="GENERAL" selected>📢 General / Todo el Equipo</option>
-                <option value="RECEPCION">Recepción</option>
-                <option value="MANTENIMIENTO">Mantenimiento</option>
-                <option value="CAMARERIA">Camarería (Ama de Llaves)</option>
-                <option value="MESAS_BAR">Mesas y Bar</option>
-                <option value="COCINA">Cocina</option>
-                <option value="ADMINISTRACION">Administración</option>
-                <option value="GERENCIA">Gerencia</option>
-                <option value="SISTEMAS">Sistemas</option>
-              </select>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="inc-title">¿Qué sucedió / Requerimiento? *</label>
+                <input type="text" id="inc-title" placeholder="Ej. Fuga de agua en hab 204" required>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label>Asignar a Persona (Opcional)</label>
-              <select id="inc-assigned-to"><option value="">-- Sin asignar (Para el área) --</option></select>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="inc-target-area">Área Destino: *</label>
+                <select id="inc-target-area" required>
+                  <option value="GENERAL">📢 General / Todo el Equipo</option>
+                  <option value="RECEPCION">Recepción</option>
+                  <option value="MANTENIMIENTO">Mantenimiento</option>
+                  <option value="CAMARERIA">Camarería (Ama de Llaves)</option>
+                  <option value="MESAS_BAR">Mesas y Bar</option>
+                  <option value="COCINA">Cocina</option>
+                  <option value="ADMINISTRACION">Administración</option>
+                  <option value="GERENCIA">Gerencia</option>
+                  <option value="SISTEMAS">Sistemas</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="inc-assigned-to">Asignar a Persona Específica (Opcional):</label>
+                <select id="inc-assigned-to">
+                  <option value="">-- Sin asignar (Para el área) --</option>
+                </select>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label>Prioridad</label>
-              <select id="inc-priority">
-                <option value="BAJA">Baja</option>
-                <option value="MEDIA" selected>Media</option>
-                <option value="ALTA">Alta</option>
-                <option value="CRITICA">🚨 Crítica</option>
-              </select>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="inc-priority">Prioridad:</label>
+                <select id="inc-priority">
+                  <option value="NORMAL">🔵 Normal (Atención regular)</option>
+                  <option value="ALTA">🟡 Alta (Requerido hoy)</option>
+                  <option value="CRITICA">🔴 CRÍTICA (Inmediato)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="inc-category">Categoría:</label>
+                <select id="inc-category">
+                  <option value="General">General</option>
+                </select>
+              </div>
             </div>
 
-            <div class="form-group full-width">
-              <label class="checkbox-item" style="text-transform: none; font-size: 13px; color: #dc2626; font-weight: 700;">
-                <input type="checkbox" id="inc-room-blocked">
-                🚨 ¿Esta novedad bloquea o inhabilita una habitación/servicio?
+            <div class="form-group checkbox-group">
+              <label>
+                <input type="checkbox" id="inc-room-blocked"> 🚨 ¿Afecta venta / Bloquea habitación?
               </label>
             </div>
 
-            <div class="form-group full-width">
-              <label>Asunto / Título Resumen</label>
-              <input type="text" id="inc-title" placeholder="Ej: Fuga de agua en habitación 204" required />
+            <div class="form-group">
+              <label for="inc-description">Detalle / Observaciones: *</label>
+              <textarea id="inc-description" rows="3" placeholder="Describe brevemente la situación..." required></textarea>
             </div>
 
-            <div class="form-group full-width">
-              <label>Detalle de la Novedad</label>
-              <textarea id="inc-description" placeholder="Escribe observaciones, acciones tomadas o seguimiento necesario..." required></textarea>
+            <div class="form-actions">
+              <button type="submit" class="btn-success">💾 Publicar Novedad</button>
+              <button type="button" onclick="toggleNewIncidentForm()" class="btn-secondary">Cancelar</button>
             </div>
-          </div>
-          <button type="submit" class="btn-primary">Publicar Novedad</button>
-        </form>
+          </form>
+        </div>
 
-        <h3 style="font-size: 16px; margin: 25px 0 12px 0; color: #1a252f;">📋 Historial de Novedades de Turno</h3>
-        
-        <!-- BARRA DE FILTROS PARA NOVEDADES -->
-        <div class="filters-bar">
-          <div class="filter-item">
-            <label>Filtrar Estado</label>
+        <!-- Filtros Rápidos -->
+        <div class="filters-card">
+          <div class="filter-row">
+            <input type="text" id="filter-search" onkeyup="filterIncidents()" placeholder="🔍 Buscar por palabra, área o persona...">
+            
             <select id="filter-status" onchange="filterIncidents()">
-              <option value="TODOS">Todos los estados</option>
-              <option value="PENDIENTE">Pendiente</option>
-              <option value="PROCESO">En Proceso</option>
-              <option value="RESUELTO">Resuelto</option>
+              <option value="TODOS">Todos los Estados</option>
+              <option value="PENDIENTE">PENDIENTES</option>
+              <option value="PROCESO">EN PROCESO</option>
+              <option value="RESUELTO">RESUELTOS</option>
             </select>
-          </div>
 
-          <div class="filter-item">
-            <label>Filtrar Área</label>
             <select id="filter-area" onchange="filterIncidents()">
-              <option value="TODAS">Todas las áreas</option>
-              <option value="GENERAL">📢 General / Todo el Equipo</option>
+              <option value="TODAS">Todas las Áreas</option>
+              <option value="GENERAL">📢 General</option>
               <option value="RECEPCION">Recepción</option>
               <option value="MANTENIMIENTO">Mantenimiento</option>
               <option value="CAMARERIA">Camarería</option>
               <option value="MESAS_BAR">Mesas y Bar</option>
               <option value="COCINA">Cocina</option>
               <option value="ADMINISTRACION">Administración</option>
-              <option value="GERENCIA">Gerencia</option>
-              <option value="SISTEMAS">Sistemas</option>
             </select>
-          </div>
 
-          <div class="filter-item">
-            <label>Filtrar Prioridad</label>
-            <select id="filter-priority" onchange="filterIncidents()">
-              <option value="TODAS">Todas las prioridades</option>
-              <option value="BAJA">Baja</option>
-              <option value="MEDIA">Media</option>
-              <option value="ALTA">Alta</option>
-              <option value="CRITICA">🚨 Crítica</option>
-            </select>
-          </div>
-
-          <div class="filter-item">
-            <label>Buscar Texto</label>
-            <input type="text" id="filter-search" placeholder="Buscar título, área o persona..." oninput="filterIncidents()" />
+            <button onclick="clearTaskFilters()" class="btn-secondary btn-sm">Limpiar Filtros</button>
           </div>
         </div>
-
-        <div id="incidents-timeline">Cargando novedades...</div>
       </div>
 
-      <!-- SECCIÓN GESTIÓN COLABORADORES (ADMIN) -->
-      <div id="tab-users" style="display: none;">
-        <h3 style="font-size: 15px; margin-bottom: 12px; color: #1a252f;">➕ Crear Nuevo Usuario</h3>
+      <!-- Muro / Línea de Tiempo de Novedades -->
+      <div id="incidents-timeline" class="timeline-container">
+        Cargando novedades...
+      </div>
+    </main>
+
+    <!-- SECCIÓN 2: GESTIÓN DE COLABORADORES (ADMIN) -->
+    <main id="tab-users" class="tab-content">
+      <div class="card-form">
+        <h3>👤 Registrar Nuevo Colaborador</h3>
         <form onsubmit="createUser(event)">
-          <div class="grid-form">
-            <div class="form-group full-width">
-              <label>Sedes / Hoteles Asignados</label>
-              <div id="hotels-checkboxes" class="checkbox-group"></div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nombre Completo: *</label>
+              <input type="text" id="user-fullname" required>
             </div>
             <div class="form-group">
-              <label>Nombre Completo</label>
-              <input type="text" id="new-user-fullname" placeholder="Ej: Maria Perez" required />
-            </div>
-            <div class="form-group">
-              <label>Nombre Display</label>
-              <input type="text" id="new-user-display" placeholder="Ej: Maria P." required />
-            </div>
-            <div class="form-group">
-              <label>Email</label>
-              <input type="email" id="new-user-email" placeholder="maria@masaya.com" required />
-            </div>
-            <div class="form-group">
-              <label>Rol</label>
-              <select id="new-user-role">
-                <option value="OPERATIVO">OPERATIVO</option>
-                <option value="ADMIN">ADMIN</option>
-              </select>
-            </div>
-            <div class="form-group full-width">
-              <label>PIN (4 dígitos)</label>
-              <input type="password" id="new-user-pin" maxlength="4" pattern="\d{4}" placeholder="1234" required />
+              <label>Nombre Corto / Apodo:</label>
+              <input type="text" id="user-displayname" placeholder="Ej. Jiny">
             </div>
           </div>
-          <button type="submit" class="btn-primary">Guardar Usuario</button>
-        </form>
 
-        <h3 style="font-size: 15px; margin: 20px 0 10px 0; color: #1a252f;">👥 Colaboradores Registrados</h3>
-        <table>
+          <div class="form-row">
+            <div class="form-group">
+              <label>PIN de Acceso (4 dígitos): *</label>
+              <input type="text" id="user-pin" maxlength="4" pattern="\d{4}" placeholder="1234" required>
+            </div>
+            <div class="form-group">
+              <label>Rol / Jerarquía: *</label>
+              <select id="user-role">
+                <option value="OPERATIVO">OPERATIVO</option>
+                <option value="SUPERVISOR">SUPERVISOR</option>
+                <option value="LIDER">LÍDER DE ÁREA</option>
+                <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Sedes con Acceso: *</label>
+            <div id="user-hotels-checkboxes" class="checkbox-grid"></div>
+          </div>
+
+          <button type="submit" class="btn-success">Guardar Colaborador</button>
+        </form>
+      </div>
+
+      <div class="card-table">
+        <h3>Lista de Colaboradores</h3>
+        <table class="data-table">
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>Sedes Autorizadas</th>
               <th>Rol</th>
-              <th>PIN</th>
+              <th>Sedes</th>
+              <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody id="users-table-body"></tbody>
         </table>
       </div>
+    </main>
 
-      <!-- SECCIÓN GESTIÓN CATEGORÍAS (ADMIN) -->
-      <div id="tab-categories" style="display: none;">
-        <h3 style="font-size: 15px; margin-bottom: 12px; color: #1a252f;">➕ Agregar Nueva Categoría</h3>
-        <form onsubmit="createCategory(event)" style="display: flex; gap: 10px; margin-bottom: 20px;">
-          <input type="text" id="new-category-name" placeholder="Ej: Mantenimiento Preventivo" required style="flex:1;" />
-          <button type="submit" class="btn-primary" style="margin:0; width: auto; padding: 0 20px;">Agregar</button>
+    <!-- SECCIÓN 3: CATEGORÍAS (ADMIN) -->
+    <main id="tab-categories" class="tab-content">
+      <div class="card-form">
+        <h3>🏷️ Crear Categoría de Novedad</h3>
+        <form onsubmit="createCategory(event)">
+          <div class="form-group">
+            <label>Nombre de la Categoría: *</label>
+            <input type="text" id="new-category-name" required placeholder="Ej. Mantenimiento, Inventario, Tour">
+          </div>
+          <button type="submit" class="btn-success">Guardar Categoría</button>
         </form>
+      </div>
 
-        <h3 style="font-size: 15px; margin-bottom: 10px; color: #1a252f;">Listado de Categorías</h3>
-        <table>
+      <div class="card-table">
+        <h3>Categorías Registradas</h3>
+        <table class="data-table">
           <thead>
             <tr>
-              <th>Nombre Categoría</th>
+              <th>Categoría</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -355,49 +288,30 @@
           <tbody id="categories-table-body"></tbody>
         </table>
       </div>
-    </div>
+    </main>
 
-    <!-- NOTIFICACIONES Y MENSAJES -->
-    <div id="error-msg" class="error-msg"></div>
-    <div id="success-msg" class="success-msg"></div>
   </div>
 
-  <!-- MODAL EDITAR SEDES -->
-  <div id="edit-modal" class="modal">
-    <div class="modal-content">
-      <h3 style="font-size: 16px; margin-bottom: 10px; color: #1a252f;">🏨 Modificar Sedes de Colaborador</h3>
-      <p id="edit-user-name" style="font-size: 13px; color: #666; margin-bottom: 15px; font-weight: 600;"></p>
+  <!-- MODAL DE RESOLUCIÓN DE NOVEDAD -->
+  <div id="resolve-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <h3>✅ Resolver Novedad</h3>
+      <p id="resolve-incident-title" style="font-weight: 600; color: #333; margin-bottom: 10px;"></p>
       
       <div class="form-group">
-        <label>Selecciona las sedes asignadas:</label>
-        <div id="edit-hotels-checkboxes" class="checkbox-group"></div>
+        <label for="resolve-notes">¿Cómo se resolvió? / Observación: *</label>
+        <textarea id="resolve-notes" rows="3" placeholder="Ej. Se reparó el empaque del grifo y quedó funcionando perfectamente." required></textarea>
       </div>
 
-      <div style="display: flex; gap: 10px; margin-top: 15px;">
-        <button onclick="saveUserHotels()" class="btn-primary" style="margin: 0;">Guardar Cambios</button>
-        <button onclick="closeEditModal()" class="btn-sm btn-danger" style="padding: 10px 15px; font-size: 13px;">Cancelar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL RESOLVER NOVEDAD CON COMENTARIO -->
-  <div id="resolve-modal" class="modal">
-    <div class="modal-content">
-      <h3 style="font-size: 16px; margin-bottom: 8px; color: #166534;">✅ Resolver Novedad</h3>
-      <p id="resolve-incident-title" style="font-size: 13px; color: #334155; margin-bottom: 12px; font-weight: 600;"></p>
-      
-      <div class="form-group">
-        <label>Observaciones de solución / Comentario explicativo</label>
-        <textarea id="resolve-notes" placeholder="Ej: Se cambiaron los cables de la luz y se verificó que el bombillo enciende correctamente." required></textarea>
-      </div>
-
-      <div style="display: flex; gap: 10px; margin-top: 15px;">
-        <button onclick="confirmResolveIncident()" class="btn-primary" style="margin: 0; background: #166534;">Confirmar Solución</button>
-        <button onclick="closeResolveModal()" class="btn-sm btn-danger" style="padding: 10px 15px; font-size: 13px;">Cancelar</button>
+      <div class="modal-actions">
+        <button onclick="confirmResolveIncident()" class="btn-success">✓ Confirmar y Resolver</button>
+        <button onclick="closeResolveModal()" class="btn-secondary">Cancelar</button>
       </div>
     </div>
   </div>
 
-<!-- Carga de Módulos JavaScript (v2.2) -->
-<script src="app.js?v=2.2"></script>
-<script src="incidents.js?v=2.2"></script>
+  <!-- Carga de Módulos JavaScript (v3.0) -->
+  <script src="app.js?v=3.0"></script>
+  <script src="incidents.js?v=3.0"></script>
+</body>
+</html>
