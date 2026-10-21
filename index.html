@@ -1,6 +1,6 @@
 <!-- BARRA DE FILTROS PARA NOVEDADES -->
 <div class="filters-bar">
-  <div class="form-group" style="margin-bottom:0;">
+  <div class="filter-item">
     <label>Filtrar Estado</label>
     <select id="filter-status" onchange="filterIncidents()">
       <option value="TODOS">Todos los estados</option>
@@ -10,7 +10,7 @@
     </select>
   </div>
 
-  <div class="form-group" style="margin-bottom:0;">
+  <div class="filter-item">
     <label>Filtrar Prioridad</label>
     <select id="filter-priority" onchange="filterIncidents()">
       <option value="TODAS">Todas las prioridades</option>
@@ -21,7 +21,7 @@
     </select>
   </div>
 
-  <div class="form-group" style="margin-bottom:0;">
+  <div class="filter-item">
     <label>Buscar Texto</label>
     <input type="text" id="filter-search" placeholder="Buscar título o detalle..." oninput="filterIncidents()" />
   </div>
