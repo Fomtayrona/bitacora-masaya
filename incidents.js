@@ -4,24 +4,12 @@
  * ============================================================================
  * Propósito:
  *   Gestionar el flujo operativo de novedades de turno (publicación, consulta,
- *   cambio de estados) y la administración en tiempo real de categorías dinámicas 
- *   (creación, activación/desactivación y eliminación).
- *
- * Funciones Principales:
- *   - loadIncidents(): Carga y renderiza la línea de tiempo de novedades por sede.
- *   - createIncident(e): Registra una nueva novedad enviándola a Supabase.
- *   - updateIncidentStatus(incId, newStatus): Actualiza el estado (PENDIENTE, PROCESO, RESUELTO).
- *   - populateCategoriesSelect(): Llena el selector desplegable con categorías activas.
- *   - createCategory(), toggleCategoryStatus(), deleteCategory(): CRUD de categorías.
- *
- * Dependencias:
- *   - Instancia _supabase iniciada en app.js
- *   - Variables globales (selectedHotelId, selectedUser, allCategories) definidas en app.js
+ *   filtrado dinámico y cambio de estados) y la administración de categorías.
  * ============================================================================
  */
 
 /**
- * Llena el elemento <select> de categorías en el formulario de novedades con las categorías activas.
+ * Llena el selector <select> con las categorías activas.
  */
 function populateCategoriesSelect() {
   const select = document.getElementById('inc-category');
@@ -37,7 +25,7 @@ function populateCategoriesSelect() {
 }
 
 /**
- * Consulta las novedades de la sede actual en Supabase y las dibuja aplicando filtros si existen.
+ * Consulta las novedades registradas en Supabase para la sede actual y aplica los filtros.
  */
 async function loadIncidents() {
   const container = document.getElementById('incidents-timeline');
@@ -55,7 +43,7 @@ async function loadIncidents() {
     if (error) throw error;
     currentIncidents = data || [];
 
-    // Dibujar la lista con o sin filtros activos
+    // Llama a la función de filtrado para renderizar la lista
     filterIncidents();
 
   } catch (err) {
@@ -64,7 +52,73 @@ async function loadIncidents() {
 }
 
 /**
- * Registra una nueva novedad de turno en Supabase.
+ * Aplica los filtros seleccionados (Estado, Prioridad y Texto) sobre currentIncidents.
+ */
+function filterIncidents() {
+  const statusFilter = document.getElementById('filter-status')?.value || 'TODOS';
+  const priorityFilter = document.getElementById('filter-priority')?.value || 'TODAS';
+  const searchFilter = (document.getElementById('filter-search')?.value || '').toLowerCase().trim();
+
+  const filtered = currentIncidents.filter(inc => {
+    const incStatus = inc.status || 'PENDIENTE';
+    const matchStatus = (statusFilter === 'TODOS') || (incStatus === statusFilter);
+    const matchPriority = (priorityFilter === 'TODAS') || (inc.priority === priorityFilter);
+    
+    const titleMatch = (inc.title || '').toLowerCase().includes(searchFilter);
+    const descMatch = (inc.description || '').toLowerCase().includes(searchFilter);
+    const catMatch = (inc.category || '').toLowerCase().includes(searchFilter);
+    const matchSearch = !searchFilter || titleMatch || descMatch || catMatch;
+
+    return matchStatus && matchPriority && matchSearch;
+  });
+
+  renderIncidentsList(filtered);
+}
+
+/**
+ * Renderiza el listado final de novedades filtradas.
+ */
+function renderIncidentsList(incidentsToRender) {
+  const container = document.getElementById('incidents-timeline');
+  if (!container) return;
+
+  if (incidentsToRender.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#888; font-size:13px; padding:20px;">No se encontraron novedades con los filtros seleccionados.</p>';
+    return;
+  }
+
+  container.innerHTML = incidentsToRender.map(inc => {
+    const author = inc.users ? (inc.users.display_name || inc.users.full_name) : 'Desconocido';
+    const dateStr = new Date(inc.created_at).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+    const status = inc.status || 'PENDIENTE';
+
+    return `
+      <div class="incident-card">
+        <div class="incident-header">
+          <span class="incident-title">${inc.title}</span>
+          <div>
+            <span class="badge-role prio-${inc.priority}">${inc.priority}</span>
+            <span class="badge-role status-${status.replace(' ', '')}">${status}</span>
+          </div>
+        </div>
+        <div class="incident-meta">
+          🏷️ <b>${inc.category}</b> | 👤 <b>${author}</b> | 🕒 ${dateStr}
+        </div>
+        <div class="incident-body">${inc.description}</div>
+        
+        <div class="incident-actions">
+          <span style="font-weight:600; color:#666;">Cambiar Estado:</span>
+          <button onclick="updateIncidentStatus('${inc.id}', 'PENDIENTE')" class="btn-sm btn-danger">Pendiente</button>
+          <button onclick="updateIncidentStatus('${inc.id}', 'PROCESO')" class="btn-sm btn-warning">En Proceso</button>
+          <button onclick="updateIncidentStatus('${inc.id}', 'RESUELTO')" class="btn-sm btn-success">Resuelto</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/**
+ * Registra una nueva novedad de turno.
  */
 async function createIncident(e) {
   e.preventDefault();
@@ -92,7 +146,7 @@ async function createIncident(e) {
 }
 
 /**
- * Actualiza el estado (PENDIENTE, PROCESO, RESUELTO) de una novedad especifica.
+ * Actualiza el estado de una novedad.
  */
 async function updateIncidentStatus(incId, newStatus) {
   hideMsgs();
@@ -110,7 +164,7 @@ async function updateIncidentStatus(incId, newStatus) {
 }
 
 /**
- * Crea o reactiva una categoría de incidencias en Supabase.
+ * Crea o reactiva una categoría.
  */
 async function createCategory(e) {
   e.preventDefault();
@@ -156,7 +210,7 @@ async function createCategory(e) {
 }
 
 /**
- * Dibuja la tabla de administración de categorías para los usuarios Admin.
+ * Dibuja la tabla de categorías para Administradores.
  */
 function renderCategoriesTable() {
   const tbody = document.getElementById('categories-table-body');
@@ -186,7 +240,7 @@ function renderCategoriesTable() {
 }
 
 /**
- * Cambia el estado de activación de una categoría (Activar/Desactivar).
+ * Cambia el estado de activación de una categoría.
  */
 async function toggleCategoryStatus(catId, currentActive) {
   hideMsgs();
@@ -206,7 +260,7 @@ async function toggleCategoryStatus(catId, currentActive) {
 }
 
 /**
- * Elimina una categoría permanentemente de Supabase.
+ * Elimina una categoría permanentemente.
  */
 async function deleteCategory(catId, catName) {
   if (!confirm(`¿Estás seguro de eliminar permanentemente la categoría "${catName}"?`)) return;
